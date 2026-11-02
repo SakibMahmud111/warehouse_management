@@ -40,37 +40,22 @@ WareManager helps warehouse and supply-chain businesses decide what to stock, wh
 
 | Layer | Technology |
 | :--- | :--- |
-| Backend / MVC framework | _TODO (e.g. Laravel / Spring MVC / ASP.NET Core MVC)_ |
-| Frontend / Views | _TODO_ |
-| Database | _TODO_ |
-| AI/ML service | _TODO (Python, only for ML features)_ |
+| Backend / MVC framework |  |
+| Frontend / Views |  |
+| Database |  |
+| AI/ML service |  |
 
 ## Setup
 
 ```bash
 # 1. Clone
-git clone <repo-url>
-cd <repo-folder>
+git clone https://github.com/SakibMahmud111/warehouse_management
+cd warehouse_management
 
 # 2. Install dependencies, configure .env, run migrations
-# TODO: add stack-specific commands
+
 
 # 3. Run the app
-# TODO: add run command
+
 ```
 
-## Team
-
-| Student ID | Name |
-| :---: | :---: |
-| | |
-| | |
-| | |
-| | |
-
-**Section Faculty:** _TODO_
-
-## Documentation
-
-- SRS: `docs/SRS.docx` _(TODO)_
-- Sprint records and AI-use disclosure: see the SRS (Sections 7 and 9).
