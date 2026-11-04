@@ -1,0 +1,13 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: waremanager
+      POSTGRES_USER: waremanager
+      POSTGRES_PASSWORD: waremanager
+    ports:
+      - "5432:5432"
+    volumes:
+      - waremanager_db:/var/lib/postgresql/data
+volumes:
+  waremanager_db:

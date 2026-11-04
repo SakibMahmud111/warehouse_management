@@ -1,0 +1,1 @@
+This file keeps the local H2 database directory in Git. Runtime database files are excluded.

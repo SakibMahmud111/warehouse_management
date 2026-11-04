@@ -1,0 +1,16 @@
+# Compiled Java output
+target/
+
+# Local H2 database files (preserve the directory)
+data/*
+!data/.gitkeep
+
+# IDE and OS artifacts
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Local secrets
+.env
+*.log
