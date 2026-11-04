@@ -1,83 +1,92 @@
-# WareManager — CSE470 Software Engineering
+# WareManager
 
-**Project:** Intelligent Warehouse and Supply Chain Optimization System  
-**Section:** 12  
-**Framework:** Spring Boot 3 / Spring MVC  
-**Current milestone:** Basic MVC application with login and a working product demonstration.
+**Intelligent Warehouse and Supply Chain Optimization System**  
+**Course:** CSE470 — Software Engineering  
+**Section:** 12
 
-## What works now
+## Overview
 
-- Custom login form using Spring Security (in-memory **demo user**)
-- Authenticated dashboard showing the number of products
-- Add a product with SKU, name, and nonnegative quantity
-- List saved products in a table
-- Product validation and duplicate-SKU check
-- H2 local database for zero-configuration testing
-- Separate PostgreSQL profile for subsequent development
+WareManager is a web-based application for managing warehouse inventory and supporting supply-chain decisions. The system is designed for a single distribution warehouse, with an emphasis on product availability, order fulfillment, batch traceability, and data-driven inventory planning.
 
-**Important:** This is the initial MVC foundation, **not** a claim that all 20 SRS features are implemented. The remaining features are planned for upcoming sprints. Keep the project aligned with the submitted SRS.
+The application uses the Model–View–Controller (MVC) architectural pattern with Spring Boot and Thymeleaf. This repository provides the implemented application foundation, with additional modules specified in the project's Software Requirements Specification (SRS).
 
-## Run on Windows (fastest method)
+## Implemented Functionality
 
-**Requirements:** Java 17+ and Apache Maven. IDE: IntelliJ IDEA or VS Code (Java extensions).
+- Login and logout using Spring Security
+- Authenticated dashboard with a product count
+- Product creation and listing
+- Input validation and duplicate-SKU handling
+- Product persistence through Spring Data JPA
+- Automated Maven test workflow with GitHub Actions
 
-1. Open **this folder containing `pom.xml`** in your IDE.
-2. Open a terminal in the project folder.
-3. Run:
+## Technology Stack
 
-```powershell
+| Layer | Technology |
+| --- | --- |
+| Language | Java 17+ |
+| Backend / MVC | Spring Boot 3, Spring MVC |
+| Views | Thymeleaf, HTML, CSS |
+| Authentication | Spring Security |
+| Persistence | Spring Data JPA (Hibernate) |
+| Local database | H2 |
+| PostgreSQL integration | JDBC driver and Spring profile configured |
+| Build and testing | Maven, JUnit, GitHub Actions |
+
+## Application Architecture
+
+The application separates HTTP request handling, business logic, persistence, and UI rendering.
+
+```text
+src/main/
+├── java/com/waremanager/
+│   ├── config/          # Security configuration
+│   ├── controller/      # HTTP endpoints and navigation
+│   ├── model/           # Domain entities and validation
+│   ├── repository/      # Database access
+│   └── service/         # Application business logic
+└── resources/
+    ├── static/css/     # Styling
+    ├── templates/      # Thymeleaf views
+    └── application.properties
+```
+
+For example, a product request is handled by `ProductController`, passed to `ProductService`, and persisted via `ProductRepository`. The controller then renders the appropriate Thymeleaf view.
+
+## Local Setup
+
+**Prerequisites:** Java 17 or later and Apache Maven.
+
+```bash
+git clone https://github.com/SakibMahmud111/warehouse_management.git
+cd warehouse_management
 mvn spring-boot:run
 ```
 
-4. Open <http://localhost:8080/login>.
-5. Sign in using the **local demo credentials** `admin` / `admin123`.
-6. Open **Products** → **New product**, add `Rice 5kg`, SKU `RICE-005`, quantity `25`, and verify it appears in the list.
+Open **http://localhost:8080/login** in a browser.
 
-To run tests: `mvn test`.
+Development login:
 
-**Security note:** The in-memory login is for coursework demonstration only. Never publish this version publicly with the hardcoded demo credentials. Replace it with secure user storage before any deployment.
+- Username: `admin`
+- Password: `admin123`
 
-## MVC architecture
+These credentials are defined for local development using an in-memory Spring Security user and must be replaced before production deployment.
 
-| Layer | Code / responsibility |
-|---|---|
-| **Model** | `src/main/java/com/waremanager/model/Product.java`: JPA entity and validation rules |
-| **View** | `src/main/resources/templates/`: Thymeleaf pages (`login`, `dashboard`, `products`, `product-form`) |
-| **Controller** | `src/main/java/com/waremanager/controller/`: receives requests and selects the appropriate view |
-| **Service** | `src/main/java/com/waremanager/service/ProductService.java`: business rules and transactions |
-| **Repository** | `src/main/java/com/waremanager/repository/ProductRepository.java`: Spring Data JPA database access |
-| **Configuration** | `src/main/java/com/waremanager/config/SecurityConfig.java`: login and access control |
+## Database Configuration
 
-**Request example:** Browser requests `/products` → `ProductController` calls `ProductService` → repository fetches `Product` objects → controller adds them to the Thymeleaf model → `products.html` renders the response.
+H2 is the default database for local development. Its file-backed datasource is configured in `src/main/resources/application.properties`.
 
-## Database
+A separate Spring profile is provided in `src/main/resources/application-postgres.properties` for PostgreSQL-based development. Activating this profile requires a running PostgreSQL instance and matching connection settings.
 
-- **Tonight / initial milestone:** H2 database (`./data/waremanager`). No database server needs to be installed.
-- **Full project:** PostgreSQL is recommended. This project already includes a PostgreSQL driver, a `postgres` Spring profile, and an optional Docker Compose configuration.
-- Do **not** activate the PostgreSQL profile unless PostgreSQL is running. H2 is the default.
+## Testing
 
-Optional PostgreSQL setup:
+Run the project tests with:
 
-```powershell
-docker compose up -d
-$env:SPRING_PROFILES_ACTIVE='postgres'
-mvn spring-boot:run
+```bash
+mvn test
 ```
 
-To switch back to H2, close the terminal or run `$env:SPRING_PROFILES_ACTIVE=''`.
+GitHub Actions also runs the Maven test workflow on pushes and pull requests.
 
-## GitHub submission
+## Planned Modules
 
-Repo: <https://github.com/SakibMahmud111/warehouse_management>
-
-1. Clone the repository using **an account that can push to it**.
-2. Copy the **contents** of this starter folder into the clone; do not nest an extra `warehouse_management_mvc_starter` directory inside it.
-3. Commit and push all files to `main` (or create a pull request if working on a branch).
-4. Verify on GitHub that `pom.xml`, `src/main/java`, and `src/main/resources/templates` are present.
-5. Complete the Google Form from the faculty's earlier email before the deadline.
-
-See `SUBMISSION_CHECKLIST.md` for exact commands and suggested form values.
-
-## Not yet implemented
-
-Supplier purchasing, FEFO allocation, batch tracing, recalls, full inventory reservation, demand forecasting, route optimization, and the other advanced SRS features. They require future implementation and testing.
+The project SRS defines additional features covering demand forecasting and replenishment, supplier performance, warehouse slotting and picking, batch allocation and traceability, quality controls, and inventory reservations. These modules will be implemented incrementally as development progresses.
