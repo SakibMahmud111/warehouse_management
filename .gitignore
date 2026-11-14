@@ -14,3 +14,8 @@ data/*
 # Local secrets
 .env
 *.log
+
+# Python (ML worker)
+__pycache__/
+.venv/
+venv/

@@ -1,1 +1,42 @@
-<!doctype html><html lang="en" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Products | WareManager</title><link rel="stylesheet" th:href="@{/css/style.css}"></head><body><header class="topbar"><a class="brand" th:href="@{/dashboard}">▣ WareManager</a><nav><a th:href="@{/dashboard}">Dashboard</a><a th:href="@{/products}">Products</a><form th:action="@{/logout}" method="post"><button class="ghost" type="submit">Log out</button></form></nav></header><main class="container"><div class="heading"><div><p class="eyebrow">INVENTORY</p><h1>Products</h1></div><a class="primary-link" th:href="@{/products/new}">+ New product</a></div><div class="tablewrap"><table><thead><tr><th>SKU</th><th>Product name</th><th>Quantity</th></tr></thead><tbody><tr th:each="item : ${products}"><td th:text="${item.sku}">SKU</td><td th:text="${item.name}">Name</td><td th:text="${item.quantity}">0</td></tr><tr th:if="${#lists.isEmpty(products)}"><td colspan="3">No products yet. Add your first item.</td></tr></tbody></table></div></main></body></html>
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Products')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+<main class="container wide">
+    <div class="heading">
+        <div><p class="eyebrow">INVENTORY</p><h1>Products</h1></div>
+        <a class="primary-link" th:href="@{/products/new}">+ New product</a>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+    <div class="tablewrap">
+        <table class="compact">
+            <thead>
+            <tr>
+                <th>SKU</th><th>Product name</th><th>Category</th><th>Supplier</th><th>Type</th>
+                <th class="num">On hand</th><th class="num">On order</th>
+                <th class="num">Cost (৳)</th><th class="num">Price (৳)</th><th class="num">Lead time</th><th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${products}">
+                <td th:text="${item.sku}">SKU</td>
+                <td th:text="${item.name}">Name</td>
+                <td th:text="${item.category}">Category</td>
+                <td th:text="${item.supplier != null} ? ${item.supplier.name} : '—'">Supplier</td>
+                <td><span class="badge" th:classappend="${item.seasonal} ? 'info'" th:text="${item.seasonal} ? 'Winter' : 'Steady'">Steady</span></td>
+                <td class="num" th:text="${item.quantity}">0</td>
+                <td class="num" th:text="${item.quantityOnOrder}">0</td>
+                <td class="num" th:text="${#numbers.formatDecimal(item.unitCost, 1, 'COMMA', 0, 'POINT')}">0</td>
+                <td class="num" th:text="${#numbers.formatDecimal(item.sellingPrice, 1, 'COMMA', 0, 'POINT')}">0</td>
+                <td class="num" th:text="${#numbers.formatDecimal(item.leadTimeDays, 1, 'COMMA', 0, 'POINT')} + ' days'"
+                    title="Manual value; F6 replaces it once 3 deliveries are recorded">7 days</td>
+                <td><a th:href="@{/products/{id}/edit(id=${item.id})}">Edit</a></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(products)}"><td colspan="11">No products yet. Add your first item.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

@@ -1,2 +1,76 @@
-<!doctype html><html lang="en" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard | WareManager</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
-<body><header class="topbar"><a class="brand" th:href="@{/dashboard}">▣ WareManager</a><nav><a th:href="@{/dashboard}">Dashboard</a><a th:href="@{/products}">Products</a><form th:action="@{/logout}" method="post"><button class="ghost" type="submit">Log out</button></form></nav></header><main class="container"><p class="eyebrow">OVERVIEW</p><h1>Warehouse Dashboard</h1><p class="muted">Your MVC application is running.</p><section class="stat"><h2 th:text="${productCount}">0</h2><p>Products in inventory</p></section><a class="primary-link" th:href="@{/products}">Manage products →</a><div class="note">This starter establishes the MVC structure; the remaining SRS features will be developed in later sprints.</div></main></body></html>
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Dashboard')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+<main class="container">
+    <p class="eyebrow">OVERVIEW</p>
+    <h1>Warehouse Dashboard</h1>
+    <p class="muted" th:if="${currentUser}">Signed in as <strong th:text="${currentUser.fullName}">Name</strong>
+        (<span th:text="${currentUser.role.label}">Role</span>)</p>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <section class="cards" th:with="o=${summary.outlook}">
+        <a class="card" th:href="@{/products}">
+            <span class="card-label">Products</span>
+            <strong th:text="${summary.productCount}">0</strong>
+            <span class="muted">in the catalogue</span>
+        </a>
+        <a class="card" th:href="@{/forecast}">
+            <span class="card-label">F1 · <span th:text="${o.seasonLabel}">Winter</span></span>
+            <strong><span th:text="${o.predictedDays}">0</span> days</strong>
+            <span class="muted" th:if="${o.hasHistory()}">
+                predicted cold days; a normal winter has <span th:text="${o.normalDays}">0</span>
+                (<span th:class="${o.differenceFromNormal < 0} ? 'bad' : 'good'"
+                       th:text="(${o.differenceFromNormal > 0} ? '+' : '') + ${o.differenceFromNormal}">0</span> days)
+            </span>
+            <span class="muted" th:unless="${o.hasHistory()}">Add temperature history to predict winter.</span>
+        </a>
+        <a class="card" th:href="@{/reorder-points}">
+            <span class="card-label">F3 · Reorder suggestions</span>
+            <strong th:text="${summary.openSuggestions}">0</strong>
+            <span class="muted"><span th:text="${summary.belowReorderPoint}">0</span> products at or below their reorder point</span>
+        </a>
+        <a class="card" th:href="@{/eoq}">
+            <span class="card-label">F4 · Winter stock plan</span>
+            <strong th:text="'৳' + ${#numbers.formatDecimal(summary.winterPlanExtraProfit, 1, 'COMMA', 0, 'POINT')}">৳0</strong>
+            <span class="muted">more expected profit than stocking for the usual number of days
+                (orders now: ৳<span th:text="${#numbers.formatDecimal(summary.winterOrderCost, 1, 'COMMA', 0, 'POINT')}">0</span>)</span>
+        </a>
+        <a class="card" th:href="@{/stockout-risk}">
+            <span class="card-label">F7 · Stockout alerts</span>
+            <strong th:class="${summary.stockoutAlerts > 0} ? 'bad'" th:text="${summary.stockoutAlerts}">0</strong>
+            <span class="muted">products likely to run out before their next delivery</span>
+        </a>
+        <a class="card" th:href="@{/anomalies}">
+            <span class="card-label">F20 · Demand anomalies</span>
+            <strong th:text="${summary.demandAnomalies}">0</strong>
+            <span class="muted">unusual sales weeks waiting for an explanation</span>
+        </a>
+        <a class="card" th:href="@{/lead-times}">
+            <span class="card-label">F6 · Supplier orders</span>
+            <strong th:text="${summary.openPurchaseOrders}">0</strong>
+            <span class="muted">orders on their way, with predicted arrival dates</span>
+        </a>
+    </section>
+
+    <section class="panel">
+        <h2>How the planning features work together</h2>
+        <ol>
+            <li><a th:href="@{/lead-times}"><strong>F6 Lead times</strong></a> learns how many days each supplier takes from past deliveries.</li>
+            <li><a th:href="@{/forecast}"><strong>F1 Demand forecasting</strong></a> predicts this winter's length from temperatures
+                and learns each product's weekly sales (winter products sell more on cold days; Eid weeks get an uplift).</li>
+            <li><a th:href="@{/safety-stock}"><strong>F2 Safety stock</strong></a> uses the forecast error and supplier lead time to size the buffer.</li>
+            <li><a th:href="@{/eoq}"><strong>F4 Order quantity</strong></a> picks the cheapest order size (EOQ) for steady products,
+                and the most profitable winter stock for winter products.</li>
+            <li><a th:href="@{/reorder-points}"><strong>F3 Reorder points</strong></a> = lead-time demand + safety stock, and creates
+                reorder suggestions with the F4 quantity.</li>
+            <li><a th:href="@{/stockout-risk}"><strong>F7 Stockout risk</strong></a> estimates the chance of running out before the next
+                delivery and links each alert to its reorder suggestion.</li>
+            <li><a th:href="@{/anomalies}"><strong>F20 Demand anomalies</strong></a> flags weeks whose sales were far from the forecast.</li>
+        </ol>
+        <p class="muted small">Everything is recalculated automatically whenever sales, temperatures, products or settings change.</p>
+    </section>
+</main>
+</body>
+</html>

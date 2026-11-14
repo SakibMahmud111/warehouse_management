@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Settings')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+<main class="container narrow">
+    <p class="eyebrow">PLANNING</p>
+    <h1>Planning settings</h1>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <form class="panel" th:action="@{/settings}" th:object="${settings}" method="post">
+        <label for="orderingCost">Cost of placing one order (৳) · F4</label>
+        <input id="orderingCost" type="number" min="0" step="1" th:field="*{orderingCost}" required>
+        <p class="help">Paperwork, transport booking, receiving: everything that costs the same however much you order.</p>
+        <span class="field-error" th:if="${#fields.hasErrors('orderingCost')}" th:errors="*{orderingCost}"></span>
+
+        <label for="holdingRatePercent">Yearly holding cost (% of unit cost) · F4</label>
+        <input id="holdingRatePercent" type="number" min="1" max="100" step="0.5" th:field="*{holdingRatePercent}" required>
+        <p class="help">Storage, money tied up in stock, damage. 20% means holding a ৳1,000 item for a year costs ৳200.</p>
+        <span class="field-error" th:if="${#fields.hasErrors('holdingRatePercent')}" th:errors="*{holdingRatePercent}"></span>
+
+        <label for="serviceLevelPercent">Service level for steady products (%) · F2</label>
+        <input id="serviceLevelPercent" type="number" min="50" max="99.9" step="0.1" th:field="*{serviceLevelPercent}" required>
+        <p class="help">Chance of not running out during a supplier lead time. Winter products calculate their own, profit-optimal level.</p>
+        <span class="field-error" th:if="${#fields.hasErrors('serviceLevelPercent')}" th:errors="*{serviceLevelPercent}"></span>
+
+        <label for="coldDayThreshold">Cold-day threshold (°C) · F1</label>
+        <input id="coldDayThreshold" type="number" min="5" max="30" step="0.5" th:field="*{coldDayThreshold}" required>
+        <p class="help">A day whose average temperature is at or below this counts as a winter day.</p>
+        <span class="field-error" th:if="${#fields.hasErrors('coldDayThreshold')}" th:errors="*{coldDayThreshold}"></span>
+
+        <label for="defaultStockDays">Usual winter stocking (days) · F4 comparison</label>
+        <input id="defaultStockDays" type="number" min="1" max="151" step="1" th:field="*{defaultStockDays}" required>
+        <p class="help">How many winter days you normally stock for (for example 60 = two months). F4 shows how much this habit
+            would cost compared with the recommended stock.</p>
+        <span class="field-error" th:if="${#fields.hasErrors('defaultStockDays')}" th:errors="*{defaultStockDays}"></span>
+
+        <label for="stockoutAlertPercent">Stockout alert level (%) · F7</label>
+        <input id="stockoutAlertPercent" type="number" min="1" max="99" step="1" th:field="*{stockoutAlertPercent}" required>
+        <p class="help">Raise an alert when the chance of running out before the next delivery is at least this.</p>
+        <span class="field-error" th:if="${#fields.hasErrors('stockoutAlertPercent')}" th:errors="*{stockoutAlertPercent}"></span>
+
+        <label for="anomalyThresholdPercent">Demand anomaly threshold (%) · F20</label>
+        <input id="anomalyThresholdPercent" type="number" min="10" max="500" step="1" th:field="*{anomalyThresholdPercent}" required>
+        <p class="help">Flag a week whose sales are at least this far above or below the forecast (and at least 5 units away).</p>
+        <span class="field-error" th:if="${#fields.hasErrors('anomalyThresholdPercent')}" th:errors="*{anomalyThresholdPercent}"></span>
+
+        <button type="submit">Save and recalculate</button>
+    </form>
+</main>
+</body>
+</html>

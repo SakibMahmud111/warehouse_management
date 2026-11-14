@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('F2 Safety stock')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+<main class="container wide">
+    <div class="heading">
+        <div><p class="eyebrow">F2 · DYNAMIC SAFETY-STOCK CALCULATION</p><h1>Safety stock</h1></div>
+        <form th:action="@{/safety-stock/recalculate}" method="post"><button type="submit">Recalculate now</button></form>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <section class="panel small">
+        <p><span class="formula">safety stock = z × √(LT × σd² + d² × σLT²)</span></p>
+        <p class="muted">d = forecast units per day during the lead time (F1) · σd = forecast error per day (F1) ·
+            LT = supplier lead time in days and σLT = how much it varies (<a th:href="@{/lead-times}">F6</a>) · z = from the service level.</p>
+        <p class="muted">Steady products use the service level from <a th:href="@{/settings}">Settings</a>
+            (<span th:text="${settings.serviceLevelPercent}">95</span>%).
+            Winter products use the <strong>most profitable</strong> service level, because unsold winter stock must be cleared cheaply:
+            (price − cost) ÷ (price − clearance price).</p>
+    </section>
+
+    <div class="tablewrap">
+        <table class="compact">
+            <thead>
+            <tr>
+                <th>Product</th>
+                <th class="num">Forecast error σ (per week)</th>
+                <th class="num">Lead time</th>
+                <th class="num">Lead-time demand</th>
+                <th class="num">Service level</th>
+                <th class="num">z</th>
+                <th class="num">Calculated</th>
+                <th>Manual override</th>
+                <th class="num">Used</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${policies}">
+                <td>
+                    <strong th:text="${p.product.name}">Product</strong><br>
+                    <span class="badge" th:classappend="${p.product.seasonal} ? 'info'" th:text="${p.product.seasonal} ? 'Winter' : 'Steady'">type</span>
+                </td>
+                <td class="num" th:text="${#numbers.formatDecimal(p.forecastErrorStd, 1, 1)}">0</td>
+                <td class="num">
+                    <span th:text="${#numbers.formatDecimal(p.leadTimeDays, 1, 1)} + ' ± ' + ${#numbers.formatDecimal(p.leadTimeStdDays, 1, 1)} + ' d'">7 ± 2 d</span>
+                    <br><span class="small muted" th:text="${p.leadTimeSource}">source</span>
+                </td>
+                <td class="num" th:text="${#numbers.formatDecimal(p.leadTimeDemand, 1, 1)}">0</td>
+                <td class="num">
+                    <span th:text="${#numbers.formatDecimal(p.serviceLevel * 100, 1, 1)} + '%'">95%</span>
+                    <br><span class="small muted" th:text="${p.product.seasonal} ? 'profit-optimal' : 'setting'">setting</span>
+                </td>
+                <td class="num" th:text="${#numbers.formatDecimal(p.safetyFactor, 1, 2)}">1.64</td>
+                <td class="num" th:text="${p.safetyStockCalculated}">0</td>
+                <td>
+                    <div th:if="${p.overridden}" class="small">
+                        <strong th:text="${p.safetyStockOverride} + ' units'">0</strong>:
+                        <span th:text="${p.overrideReason}">reason</span>
+                        <form th:action="@{/safety-stock/{id}/override/clear(id=${p.product.id})}" method="post" style="margin-top:6px">
+                            <button class="small-button secondary" type="submit">Remove override</button>
+                        </form>
+                    </div>
+                    <form class="inline-form" th:unless="${p.overridden}"
+                          th:action="@{/safety-stock/{id}/override(id=${p.product.id})}" method="post">
+                        <input type="number" name="units" min="0" style="width:80px" placeholder="units" required aria-label="Override units">
+                        <input type="text" name="reason" maxlength="300" style="width:150px" placeholder="reason" required aria-label="Reason">
+                        <button class="small-button" type="submit">Set</button>
+                    </form>
+                </td>
+                <td class="num"><strong th:text="${p.effectiveSafetyStock}">0</strong></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(policies)}"><td colspan="9">No planning data yet. Add products and sales history.</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="muted small">The safety stock in the "Used" column goes into the reorder point (<a th:href="@{/reorder-points}">F3</a>).</p>
+</main>
+</body>
+</html>
