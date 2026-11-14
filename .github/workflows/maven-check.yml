@@ -16,5 +16,11 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
+      - name: Set up Python for the ML worker (F1, F6)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the ML worker's packages
+        run: pip install -r ml/requirements.txt
       - name: Test Spring Boot application
         run: mvn --batch-mode --no-transfer-progress test

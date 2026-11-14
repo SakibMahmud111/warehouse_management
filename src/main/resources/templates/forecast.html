@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('F1 Demand forecasting')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+<main class="container wide">
+    <div class="heading">
+        <div><p class="eyebrow">F1 · DEMAND FORECASTING</p><h1>Demand forecast</h1></div>
+        <form th:action="@{/forecast/recalculate}" method="post">
+            <input type="hidden" name="productId" th:if="${selected}" th:value="${selected.id}">
+            <button type="submit">Recalculate now</button>
+        </form>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+    <p class="small">Machine-learning models trained by:
+        <span class="badge" th:classappend="${mlPython} ? 'ok' : 'warn'" th:text="${mlEngine}">Python with scikit-learn</span></p>
+
+    <!-- ===================== Winter outlook ===================== -->
+    <section class="panel">
+        <h2 th:text="${outlook.seasonLabel} + ' outlook'">Winter outlook</h2>
+        <div th:unless="${outlook.hasHistory()}" class="alert">
+            There is not enough temperature history to learn past winters yet. Add daily temperatures below.
+        </div>
+        <div class="split" th:if="${outlook.hasHistory()}">
+            <div>
+                <p class="muted small">Predicted cold days this winter (daily average ≤ <span th:text="${outlook.coldThreshold}">20</span> °C)</p>
+                <div class="big"><span th:text="${outlook.predictedDays}">0</span> days</div>
+                <p>
+                    Likely range <strong th:text="${outlook.lowDays} + '–' + ${outlook.highDays}">0–0</strong> days.
+                    A normal winter (average of <span th:text="${#lists.size(outlook.pastWinters)}">0</span> past winters) has
+                    <strong th:text="${outlook.normalDays}">0</strong> days:
+                    this one is expected to be
+                    <strong th:class="${outlook.differenceFromNormal < 0} ? 'bad' : 'good'"
+                            th:text="${outlook.differenceFromNormal < 0} ? (${-outlook.differenceFromNormal} + ' days shorter') : (${outlook.differenceFromNormal} + ' days longer')">0</strong>.
+                </p>
+                <p th:if="${outlook.finished}"><span class="badge ok">Winter is over</span>
+                    It had <span th:text="${outlook.coldDaysSoFar}">0</span> cold days.</p>
+                <p th:if="${outlook.inProgress}"><span class="badge info">Winter in progress</span>
+                    <span th:text="${outlook.coldDaysSoFar}">0</span> cold days so far,
+                    about <strong th:text="${outlook.remainingDays}">0</strong> left.</p>
+                <p th:if="${outlook.expectedStart != null}">
+                    Remaining cold days expected from
+                    <strong th:text="${#temporals.format(outlook.expectedStart, 'd MMM yyyy')}">date</strong> to
+                    <strong th:text="${#temporals.format(outlook.expectedEnd, 'd MMM yyyy')}">date</strong>.
+                </p>
+                <p class="small muted">
+                    <strong>Model:</strong> <span th:text="${outlook.method}">method</span>
+                    <span th:if="${outlook.getRSquared() > 0}"> · R² = <span th:text="${#numbers.formatDecimal(outlook.getRSquared(), 1, 2)}">0</span></span>
+                    <span th:if="${outlook.octoberAverage != null}"> · this October averaged
+                        <span th:text="${#numbers.formatDecimal(outlook.octoberAverage, 1, 1)}">0</span> °C</span>
+                    <span th:if="${outlook.lastReadingDate != null}"> · last reading
+                        <span th:text="${#temporals.format(outlook.lastReadingDate, 'd MMM yyyy')}">date</span></span>
+                </p>
+                <p class="small"><a th:href="@{/eoq}">See how much winter stock to buy (F4) →</a></p>
+            </div>
+            <div>
+                <p class="muted small">Cold days in past winters (October average in brackets)</p>
+                <div class="bars">
+                    <div class="bar-row" th:each="w : ${outlook.pastWinters}">
+                        <span th:text="${w.label}">2025–26</span>
+                        <div class="bar-track"><div class="bar-fill" th:style="'width:' + ${w.coldDays * 100 / outlook.maxWinterDays} + '%'"></div></div>
+                        <span><strong th:text="${w.coldDays}">0</strong> days
+                            <span class="muted" th:if="${w.octoberAverage != null}"
+                                  th:text="'(' + ${#numbers.formatDecimal(w.octoberAverage, 1, 1)} + ' °C)'">(27 °C)</span></span>
+                    </div>
+                    <div class="bar-row">
+                        <strong>Predicted</strong>
+                        <div class="bar-track"><div class="bar-fill current" th:style="'width:' + ${outlook.predictedDays * 100 / outlook.maxWinterDays} + '%'"></div></div>
+                        <strong th:text="${outlook.predictedDays} + ' days'">0 days</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== Product forecast ===================== -->
+    <section class="panel" th:if="${selected == null}">
+        <p>No products yet. <a th:href="@{/products/new}">Add a product</a> to see its forecast.</p>
+    </section>
+
+    <section class="panel" th:if="${selected != null}">
+        <h2>Weekly sales forecast</h2>
+        <nav class="tabs">
+            <a th:each="p : ${products}" th:href="@{/forecast(productId=${p.id})}"
+               th:classappend="${p.id == selected.id} ? 'active'" th:text="${p.name}">Product</a>
+        </nav>
+        <p class="small">
+            <strong th:text="${selected.name}">Product</strong>
+            <span class="badge" th:classappend="${selected.seasonal} ? 'info'" th:text="${selected.seasonal} ? 'Winter product' : 'Steady product'">type</span>
+        </p>
+        <p class="small muted">
+            <strong>Model:</strong> <span th:text="${data.model.method}">method</span>.
+            <span th:if="${data.model.eventFactor != 1.0}">Holiday/promotion weeks:
+                ×<span th:text="${#numbers.formatDecimal(data.model.eventFactor, 1, 2)}">1.00</span>.</span>
+            Average weekly error: ±<span th:text="${#numbers.formatDecimal(data.model.meanAbsoluteError, 1, 1)}">0</span> units
+            (standard deviation <span th:text="${#numbers.formatDecimal(data.model.errorStd, 1, 1)}">0</span>, used by F2).
+        </p>
+
+        <div th:if="${!chart.empty}">
+            <svg class="chart" viewBox="0 0 760 240" role="img" aria-label="Actual sales, model and forecast by week">
+                <g th:each="t : ${chart.valueTicks}">
+                    <line class="grid" th:attr="x1=${chart.left},x2=${chart.right},y1=${t.position},y2=${t.position}"/>
+                    <text class="axis-label" text-anchor="end" th:attr="x=${chart.left - 6},y=${t.position + 4}" th:text="${t.label}">0</text>
+                </g>
+                <text class="axis-label" text-anchor="middle" th:each="t : ${chart.weekTicks}"
+                      th:attr="x=${t.position},y=${chart.bottom + 18}" th:text="${t.label}">Jan 26</text>
+                <line class="today" th:attr="x1=${chart.todayX},x2=${chart.todayX},y1=0,y2=${chart.bottom}"/>
+                <polyline class="actual" th:attr="points=${chart.actualPoints}"/>
+                <polyline class="model" th:attr="points=${chart.modelPoints}"/>
+                <polyline class="forecast" th:attr="points=${chart.forecastPoints}"/>
+            </svg>
+            <div class="legend">
+                <span class="l-actual">Actual sales (last 52 weeks)</span>
+                <span class="l-model">What the model says those weeks should have sold</span>
+                <span class="l-forecast">Forecast (next 12 weeks)</span>
+            </div>
+        </div>
+        <p th:if="${chart.empty}" class="muted">No sales history for this product yet. Record weekly sales below.</p>
+
+        <h3>Next 12 weeks</h3>
+        <div class="tablewrap" style="margin:0">
+            <table class="compact">
+                <thead><tr><th>Week starting</th><th class="num">Expected cold days</th><th>Holiday / promotion</th><th class="num">Forecast units</th></tr></thead>
+                <tbody>
+                <tr th:each="f : ${data.forecasts}">
+                    <td th:text="${#temporals.format(f.weekStart, 'd MMM yyyy')}">date</td>
+                    <td class="num" th:text="${f.expectedColdDays}">0</td>
+                    <td><span class="badge warn" th:if="${f.eventWeek}">Event week</span></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(f.quantity, 1, 'COMMA', 0, 'POINT')}">0</td>
+                </tr>
+                <tr><td colspan="3"><strong>Total</strong></td>
+                    <td class="num"><strong th:text="${#numbers.formatDecimal(data.forecastTotal, 1, 'COMMA', 0, 'POINT')}">0</strong></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ===================== Inputs ===================== -->
+    <section class="split">
+        <div class="panel">
+            <h2>Record a daily temperature</h2>
+            <form class="inline-form" th:action="@{/forecast/temperatures}" method="post">
+                <input type="hidden" name="productId" th:if="${selected}" th:value="${selected.id}">
+                <input type="date" name="date" th:value="${today}" th:max="${today}" required aria-label="Date">
+                <input type="number" name="averageC" step="0.1" min="-10" max="50" placeholder="Average °C" required aria-label="Average temperature">
+                <button type="submit">Save</button>
+            </form>
+            <p class="help">Saving a reading for an existing date corrects it.</p>
+            <table class="compact" style="margin-top:8px">
+                <thead><tr><th>Recent readings</th><th class="num">°C</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="r : ${recentReadings}">
+                    <td th:text="${#temporals.format(r.readingDate, 'EEE d MMM yyyy')}">date</td>
+                    <td class="num" th:text="${r.averageC}">0</td>
+                    <td><span class="badge info" th:if="${r.averageC <= outlook.coldThreshold}">cold day</span></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel" th:if="${selected != null}">
+            <h2>Record weekly sales</h2>
+            <form class="inline-form" th:action="@{/forecast/sales}" method="post">
+                <select name="productId" aria-label="Product">
+                    <option th:each="p : ${products}" th:value="${p.id}" th:text="${p.name}"
+                            th:selected="${p.id == selected.id}">Product</option>
+                </select>
+                <input type="date" name="week" th:value="${today}" th:max="${today}" required aria-label="Any day in the week">
+                <input type="number" name="quantity" min="0" placeholder="Units sold" required aria-label="Units sold">
+                <button type="submit">Save</button>
+            </form>
+            <p class="help">Pick any day in the week; the whole week (Monday to Sunday) is recorded. Saving the same week again corrects it.</p>
+
+            <h2 style="margin-top:28px">Holidays and promotions</h2>
+            <form class="inline-form" th:action="@{/forecast/events}" method="post">
+                <input type="hidden" name="productId" th:value="${selected.id}">
+                <input type="text" name="name" maxlength="100" placeholder="Name, e.g. Winter sale" required aria-label="Event name">
+                <input type="date" name="startDate" required aria-label="Start date">
+                <input type="date" name="endDate" required aria-label="End date">
+                <button type="submit">Add</button>
+            </form>
+            <details style="margin-top:12px">
+                <summary th:text="${#lists.size(events)} + ' events (Eid dates are approximate; correct them if needed)'">events</summary>
+                <table class="compact">
+                    <tbody>
+                    <tr th:each="e : ${events}">
+                        <td th:text="${e.name}">Eid</td>
+                        <td th:text="${#temporals.format(e.startDate, 'd MMM yyyy')} + ' – ' + ${#temporals.format(e.endDate, 'd MMM yyyy')}">dates</td>
+                        <td>
+                            <form th:action="@{/forecast/events/{id}/delete(id=${e.id})}" method="post">
+                                <input type="hidden" name="productId" th:value="${selected.id}">
+                                <button class="small-button secondary" type="submit">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </details>
+        </div>
+    </section>
+
+    <section class="panel small">
+        <h2>How F1 works</h2>
+        <ol>
+            <li><strong>Winter length (machine learning):</strong> for each past winter, count the cold days and note the average
+                October temperature. A straight line is fitted through those points (linear regression). This October's
+                temperature is put into the line to predict this winter. Once winter starts, the days already passed are counted.</li>
+            <li><strong>Winter products:</strong> a second regression learns <span class="formula">weekly sales = base + extra × cold days</span>
+                from the sales and temperature history.</li>
+            <li><strong>Steady products:</strong> average of the last 12 normal weeks (moving average).</li>
+            <li><strong>Holidays and promotions:</strong> the average uplift seen in past event weeks is applied to future event weeks.</li>
+        </ol>
+        <p>Both regressions are trained in Python with scikit-learn (<span class="formula">ml/model_worker.py</span>), which the
+            app starts in the background. If Python is not installed, the same formulas run in Java and give the same numbers.</p>
+    </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('F3 Reorder points')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+<main class="container wide">
+    <div class="heading">
+        <div><p class="eyebrow">F3 · REORDER-POINT OPTIMIZATION</p><h1>Reorder points</h1></div>
+        <form th:action="@{/reorder-points/recalculate}" method="post"><button type="submit">Recalculate now</button></form>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <section class="panel small">
+        <p><span class="formula">reorder point = lead-time demand (F1) + safety stock (F2)</span></p>
+        <p class="muted">When stock on hand + stock on order is at or below the reorder point, a reorder suggestion is created
+            with the quantity from <a th:href="@{/eoq}">F4</a>. Winter products follow the winter stock plan instead, so leftover
+            winter stock is never reordered.</p>
+    </section>
+
+    <div class="tablewrap">
+        <table class="compact">
+            <thead>
+            <tr>
+                <th>Product</th>
+                <th class="num">Lead-time demand</th>
+                <th class="num">Safety stock</th>
+                <th class="num">Reorder point</th>
+                <th class="num">On hand</th>
+                <th class="num">On order</th>
+                <th class="num">Position</th>
+                <th>Status</th>
+                <th>History (newest first)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${policies}">
+                <td>
+                    <strong th:text="${p.product.name}">Product</strong><br>
+                    <span class="badge" th:classappend="${p.product.seasonal} ? 'info'" th:text="${p.product.seasonal} ? 'Winter' : 'Steady'">type</span>
+                </td>
+                <td class="num" th:text="${#numbers.formatDecimal(p.leadTimeDemand, 1, 1)}">0</td>
+                <td class="num" th:text="${p.effectiveSafetyStock}">0</td>
+                <td class="num"><strong th:text="${p.reorderPoint}">0</strong></td>
+                <td class="num" th:text="${p.product.quantity}">0</td>
+                <td class="num" th:text="${p.product.quantityOnOrder}">0</td>
+                <td class="num" th:text="${p.product.inventoryPosition}">0</td>
+                <td>
+                    <span class="badge"
+                          th:classappend="${p.reorderStatus == 'OK'} ? 'ok' : (${p.belowReorderPoint} ? 'danger' : 'warn')"
+                          th:text="${p.reorderStatus}">OK</span>
+                </td>
+                <td class="small">
+                    <span th:each="h, stat : ${history[p.product.id]}">
+                        <span th:text="${h.reorderPoint}">0</span><span class="muted"
+                              th:text="' (' + ${#temporals.format(h.recordedAt, 'd MMM')} + ')'"> (date)</span><span th:unless="${stat.last}">, </span>
+                    </span>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(policies)}"><td colspan="9">No planning data yet. Add products and sales history.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Reorder suggestions</h2>
+    <div class="tablewrap">
+        <table class="compact">
+            <thead>
+            <tr><th>Created</th><th>Product</th><th class="num">Quantity</th><th>Reason</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="s : ${suggestions}">
+                <td th:text="${#temporals.format(s.createdAt, 'd MMM yyyy')}">date</td>
+                <td th:text="${s.product.name}">Product</td>
+                <td class="num" th:text="${s.quantity}">0</td>
+                <td class="small" th:text="${s.reason}">reason</td>
+                <td><span class="badge" th:classappend="${s.open} ? 'warn' : (${s.received} ? 'ok' : '')"
+                          th:text="${s.status.label}">Open</span></td>
+                <td>
+                    <div class="inline-form" th:if="${s.open}">
+                        <form class="inline-form" th:action="@{/reorder-points/suggestions/{id}/ordered(id=${s.id})}" method="post">
+                            <input type="date" name="orderedOn" th:value="${today}" th:max="${today}" aria-label="Ordered on">
+                            <button class="small-button" type="submit">Mark ordered</button>
+                        </form>
+                        <form th:action="@{/reorder-points/suggestions/{id}/dismiss(id=${s.id})}" method="post">
+                            <button class="small-button secondary" type="submit">Dismiss</button>
+                        </form>
+                    </div>
+                    <form class="inline-form" th:if="${s.ordered}" th:action="@{/reorder-points/suggestions/{id}/received(id=${s.id})}" method="post">
+                        <input type="date" name="receivedOn" th:value="${today}" th:max="${today}" aria-label="Received on">
+                        <button class="small-button" type="submit">Mark received</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(suggestions)}"><td colspan="6">No suggestions: every product is above its reorder point.</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="muted small">"Mark ordered" adds the units to "On order" and records a purchase order with the F6 predicted arrival date.
+        "Mark received" moves them into stock; the real days between the two dates teach <a th:href="@{/lead-times}">F6</a>
+        (the received date must be at least 1 day after the order date). Both recalculate all plans.</p>
+</main>
+</body>
+</html>
