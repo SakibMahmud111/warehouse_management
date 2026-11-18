@@ -152,7 +152,7 @@ public final class DemandForecaster {
 
     /**
      * Total forecast demand for {@code days} days starting on {@code from}
-     * (each day gets 1/7 of its week's forecast). Used for lead-time demand in F2.
+     * (each day gets 1/7 of its week's forecast). Used for lead-time demand in F2 and F3.
      */
     public static double demandOverDays(List<WeekForecast> forecasts, LocalDate from, int days) {
         if (forecasts.isEmpty() || days <= 0) {

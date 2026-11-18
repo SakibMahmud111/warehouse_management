@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('F7 Stockout risk')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+<main class="container wide">
+    <div class="heading">
+        <div><p class="eyebrow">F7 · STOCKOUT PROBABILITY ESTIMATION</p><h1>Stockout risk</h1></div>
+        <form th:action="@{/stockout-risk/recalculate}" method="post"><button type="submit">Recalculate now</button></form>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+    <p class="small">Probability model calculated by:
+        <span class="badge" th:classappend="${mlPython} ? 'ok' : 'warn'" th:text="${mlEngine}">Python with scikit-learn</span></p>
+
+    <section class="panel small">
+        <p><span class="formula">chance of running out = 1 − Φ((on hand − expected demand) ÷ σ)</span>,
+            <span class="formula">σ = √(days × σd² + d² × σLT²)</span></p>
+        <p class="muted">"Days" = until the next open order arrives (F6 expected date), or one predicted lead time if nothing is on order.
+            Expected demand comes from the <a th:href="@{/forecast}">F1 forecast</a>, σd from its error, σLT from <a th:href="@{/lead-times}">F6</a>.
+            Products at or above <strong th:text="${#numbers.formatDecimal(settings.stockoutAlertPercent, 1, 0)} + '%'">30%</strong>
+            (<a th:href="@{/settings}">change</a>) raise an alert linked to their <a th:href="@{/reorder-points}">F3 reorder suggestion</a>.
+            The chance is calculated in Python with SciPy's normal distribution (<span class="formula">ml/model_worker.py</span>).</p>
+    </section>
+
+    <div class="tablewrap">
+        <table class="compact">
+            <thead>
+            <tr>
+                <th>Product</th><th>Chance of running out</th><th class="num">On hand</th>
+                <th class="num">Days to cover</th><th class="num">Expected demand</th><th>Basis</th><th>Reorder status (F3)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${ranked}" th:with="pct=${p.stockoutProbability * 100}">
+                <td><strong th:text="${p.product.name}">Product</strong></td>
+                <td style="min-width:180px">
+                    <div class="bar-track"><div class="bar-fill" th:classappend="${pct >= settings.stockoutAlertPercent} ? 'current'"
+                         th:style="'width:' + ${p.stockoutPercent} + '%'"></div></div>
+                    <strong th:class="${pct >= settings.stockoutAlertPercent} ? 'bad'"
+                            th:text="${#numbers.formatDecimal(pct, 1, 1)} + '%'">0%</strong>
+                </td>
+                <td class="num" th:text="${p.product.quantity}">0</td>
+                <td class="num" th:text="${p.riskHorizonDays}">0</td>
+                <td class="num" th:text="${#numbers.formatDecimal(p.riskDemand, 1, 'COMMA', 0, 'POINT')}">0</td>
+                <td class="small muted" th:text="${p.riskNote}">basis</td>
+                <td class="small" th:text="${p.reorderStatus}">OK</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(ranked)}"><td colspan="7">No planning data yet.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Stockout alerts</h2>
+    <div class="tablewrap">
+        <table class="compact">
+            <thead><tr><th>Raised</th><th>Product</th><th>Severity</th><th>Details</th><th>Linked suggestion (F3)</th><th>Status</th></tr></thead>
+            <tbody>
+            <tr th:each="a : ${alerts}">
+                <td th:text="${#temporals.format(a.createdAt, 'd MMM yyyy')}">date</td>
+                <td th:text="${a.product.name}">Product</td>
+                <td><span class="badge" th:classappend="${a.severity == 'High'} ? 'danger' : 'warn'" th:text="${a.severity}">High</span></td>
+                <td class="small" th:text="${a.message}">message</td>
+                <td class="small">
+                    <a th:if="${a.suggestion != null}" th:href="@{/reorder-points}"
+                       th:text="'#' + ${a.suggestion.id} + ': order ' + ${a.suggestion.quantity} + ' (' + ${a.suggestion.status.label} + ')'">#1</a>
+                    <span th:if="${a.suggestion == null}" class="muted">none</span>
+                </td>
+                <td>
+                    <span class="badge" th:classappend="${a.active} ? 'warn' : 'ok'" th:text="${a.status.label}">Open</span>
+                    <div class="small muted" th:if="${a.note != null}" th:text="${a.note}">note</div>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(alerts)}"><td colspan="6">No stockout alerts.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

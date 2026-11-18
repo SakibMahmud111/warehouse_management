@@ -51,7 +51,7 @@
                     <span th:if="${outlook.lastReadingDate != null}"> · last reading
                         <span th:text="${#temporals.format(outlook.lastReadingDate, 'd MMM yyyy')}">date</span></span>
                 </p>
-                <p class="small"><a th:href="@{/safety-stock}">See the safety stock this forecast needs (F2) →</a></p>
+                <p class="small"><a th:href="@{/eoq}">See how much winter stock to buy (F4) →</a></p>
             </div>
             <div>
                 <p class="muted small">Cold days in past winters (October average in brackets)</p>

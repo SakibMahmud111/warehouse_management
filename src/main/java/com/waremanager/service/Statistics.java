@@ -1,7 +1,7 @@
 package com.waremanager.service;
 
 /**
- * Small maths helpers used by the forecasting (F1) and safety-stock (F2) calculations.
+ * Small maths helpers used by the forecasting (F1) and inventory (F2-F4) calculations.
  *
  * This is plain Java: it does not use Spring or the database, so it is easy to test
  * and easy to explain. Everything here is standard textbook statistics.
@@ -99,6 +99,11 @@ public final class Statistics {
 
     // ---------- Normal (bell-curve) distribution ----------
 
+    /** Height of the standard normal curve at z. */
+    public static double normalPdf(double z) {
+        return Math.exp(-0.5 * z * z) / Math.sqrt(2 * Math.PI);
+    }
+
     /** Probability that a standard normal value is at most z, e.g. normalCdf(1.645) ≈ 0.95. */
     public static double normalCdf(double z) {
         return 0.5 * (1 + erf(z / Math.sqrt(2)));
@@ -126,6 +131,14 @@ public final class Statistics {
             }
         }
         return (low + high) / 2;
+    }
+
+    /**
+     * Expected shortage factor L(z) = pdf(z) - z * (1 - cdf(z)).
+     * Expected units short = standard deviation * L(z). Used to estimate expected sales and leftovers.
+     */
+    public static double expectedShortageFactor(double z) {
+        return normalPdf(z) - z * (1 - normalCdf(z));
     }
 
     /** Error function, Abramowitz and Stegun formula 7.1.26 (accurate to about 0.0000002). */

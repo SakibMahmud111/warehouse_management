@@ -1,7 +1,10 @@
 package com.waremanager;
 
+import com.waremanager.service.AnomalyService;
 import com.waremanager.service.DemoDataGenerator;
 import com.waremanager.service.JavaModelTrainer;
+import com.waremanager.service.LeadTimeEstimate;
+import com.waremanager.service.LeadTimePredictor;
 import com.waremanager.service.ModelTrainer;
 import com.waremanager.service.PythonModelTrainer;
 import com.waremanager.service.Statistics;
@@ -21,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
- * The F1 regression is trained in Python (ml/model_worker.py, scikit-learn) with a Java backup.
+ * The F1, F6, F7 and F20 models run in Python (ml/model_worker.py: scikit-learn, SciPy, NumPy) with a Java backup.
  * These tests check that both give the same numbers, and that the app falls back to Java when Python
  * cannot be used. The Python tests are skipped on a PC without Python and scikit-learn
  * (install them with: pip install -r ml/requirements.txt); GitHub Actions installs them.
@@ -43,6 +46,9 @@ class PythonModelTests {
         double[] y = {3, 5, 7, 9.5};
         Statistics.LineFit line = missing.fitLine(x, y);
         assertEquals(JAVA.fitLine(x, y).getSlope(), line.getSlope());
+        assertEquals(JAVA.leadTime(new double[]{5, 6, 9}), missing.leadTime(new double[]{5, 6, 9}));
+        assertEquals(JAVA.stockoutRisk(50, 80, 7, 3, 1), missing.stockoutRisk(50, 80, 7, 3, 1));
+        assertTrue(missing.anomalies(new double[]{444}, new double[]{239}, 50, 5).unusual()[0]);
         assertFalse(missing.isUsingPython());
         assertTrue(missing.getStatus().startsWith("Java backup"), missing.getStatus());
     }
@@ -78,6 +84,82 @@ class PythonModelTests {
         assertSameLine(JAVA.fitLine(new double[]{0, 3, 5, 7}, new double[]{9, 9, 9, 9}), PYTHON.fitLine(new double[]{0, 3, 5, 7}, new double[]{9, 9, 9, 9}));
         assertSameLine(JAVA.fitLine(new double[]{4, 4, 4}, new double[]{1, 2, 6}), PYTHON.fitLine(new double[]{4, 4, 4}, new double[]{1, 2, 6}));
         assertSameLine(JAVA.fitLine(new double[]{1, 2}, new double[]{5, 3}), PYTHON.fitLine(new double[]{1, 2}, new double[]{5, 3}));
+    }
+
+    @Test
+    void pythonPredictsTheSameLeadTimesAsJava() {
+        assumeTrue(PYTHON.isUsingPython(), "Python with scikit-learn is not available: " + PYTHON.getStatus());
+        List<double[]> cases = List.of(new double[]{5, 5, 5, 5}, new double[]{10, 10, 10, 10, 16, 16, 16},
+                new double[]{6, 6, 6}, new double[]{12, 14, 13, 15, 14, 16, 15, 17}, new double[]{3, 9, 4, 8, 5});
+        for (double[] days : cases) {
+            assertEquals(JAVA.leadTime(days), PYTHON.leadTime(days));
+        }
+        SplittableRandom random = new SplittableRandom(6);
+        for (int test = 0; test < 40; test++) {
+            double[] days = new double[3 + random.nextInt(10)];
+            for (int i = 0; i < days.length; i++) {
+                days[i] = 2 + random.nextInt(20);
+            }
+            ModelTrainer.LeadTimeFit java = JAVA.leadTime(days);
+            ModelTrainer.LeadTimeFit python = PYTHON.leadTime(days);
+            assertEquals(java.predictedDays(), python.predictedDays());
+            assertEquals(java.spreadDays(), python.spreadDays());
+            assertEquals(java.trendPerDelivery(), python.trendPerDelivery(), 1e-6);
+        }
+        LeadTimeEstimate estimate = LeadTimePredictor.estimate(List.of(10, 10, 10, 10, 16, 16, 16), 7, 2, PYTHON);
+        assertTrue(estimate.isFromDeliveries());
+        assertEquals(LeadTimePredictor.estimate(List.of(10, 10, 10, 10, 16, 16, 16), 7, 2).getPredictedDays(),
+                estimate.getPredictedDays());
+    }
+
+    @Test
+    void pythonGivesTheSameStockoutRiskAsJava() {
+        assumeTrue(PYTHON.isUsingPython(), "Python with scikit-learn is not available: " + PYTHON.getStatus());
+        SplittableRandom random = new SplittableRandom(7);
+        for (int test = 0; test < 60; test++) {
+            double stock = random.nextInt(400);
+            double demand = random.nextDouble(0, 400);
+            int days = 1 + random.nextInt(30);
+            double dailyError = random.nextDouble(0, 30);
+            double leadTimeStd = random.nextDouble(0, 4);
+            ModelTrainer.StockoutRisk java = JAVA.stockoutRisk(stock, demand, days, dailyError, leadTimeStd);
+            ModelTrainer.StockoutRisk python = PYTHON.stockoutRisk(stock, demand, days, dailyError, leadTimeStd);
+            assertEquals(java.demandStd(), python.demandStd());
+            // SciPy's bell curve is exact; the Java backup's formula is accurate to about 0.0000001
+            assertEquals(java.probability(), python.probability(), 1e-6);
+        }
+        assertEquals(0.0, PYTHON.stockoutRisk(10, 0, 7, 0, 1).probability());          // no demand, no risk
+        assertEquals(0.5, PYTHON.stockoutRisk(100, 100, 7, 5, 1).probability(), 1e-12); // stock = expected demand
+        assertEquals(1.0, PYTHON.stockoutRisk(5, 10, 7, 0, 0).probability());          // certain demand above stock
+    }
+
+    @Test
+    void pythonFlagsTheSameUnusualWeeksAsJava() {
+        assumeTrue(PYTHON.isUsingPython(), "Python with scikit-learn is not available: " + PYTHON.getStatus());
+        double[] actual = {444, 29, 260, 4, 7, 120};
+        double[] expected = {239, 81, 239, 2, 0.3, 80};
+        ModelTrainer.AnomalyCheck python = PYTHON.anomalies(actual, expected, 50, AnomalyService.MIN_UNITS);
+        ModelTrainer.AnomalyCheck java = JAVA.anomalies(actual, expected, 50, AnomalyService.MIN_UNITS);
+        boolean[] wanted = {true, true, false, false, false, true};   // +86%, -64%, +9%, only 2 units, no forecast, +50%
+        for (int i = 0; i < actual.length; i++) {
+            assertEquals(wanted[i], python.unusual()[i], "week " + i);
+            assertEquals(java.unusual()[i], python.unusual()[i], "week " + i);
+            assertEquals(java.deviationPercent()[i], python.deviationPercent()[i]);
+            assertEquals(wanted[i], AnomalyService.isAnomaly(actual[i], expected[i], 50), "week " + i);
+        }
+        SplittableRandom random = new SplittableRandom(23);
+        double[] a = new double[300];
+        double[] e = new double[300];
+        for (int i = 0; i < a.length; i++) {
+            e[i] = random.nextDouble(0, 300);
+            a[i] = Math.round(e[i] * random.nextDouble(0.2, 2.2));
+        }
+        python = PYTHON.anomalies(a, e, 40, 5);
+        java = JAVA.anomalies(a, e, 40, 5);
+        for (int i = 0; i < a.length; i++) {
+            assertEquals(java.unusual()[i], python.unusual()[i]);
+            assertEquals(java.deviationPercent()[i], python.deviationPercent()[i]);
+        }
     }
 
     @Test

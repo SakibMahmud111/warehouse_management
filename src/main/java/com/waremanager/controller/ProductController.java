@@ -1,6 +1,7 @@
 package com.waremanager.controller;
 
 import com.waremanager.model.Product;
+import com.waremanager.service.LeadTimeService;
 import com.waremanager.service.PlanningService;
 import com.waremanager.service.ProductService;
 import jakarta.validation.Valid;
@@ -16,10 +17,12 @@ public class ProductController {
 
     private final ProductService service;
     private final PlanningService planning;
+    private final LeadTimeService leadTimes;
 
-    public ProductController(ProductService service, PlanningService planning) {
+    public ProductController(ProductService service, PlanningService planning, LeadTimeService leadTimes) {
         this.service = service;
         this.planning = planning;
+        this.leadTimes = leadTimes;
     }
 
     @GetMapping
@@ -35,18 +38,19 @@ public class ProductController {
     }
 
     @PostMapping
-    public String create(@Valid @ModelAttribute("product") Product product, BindingResult errors, Model model,
+    public String create(@Valid @ModelAttribute("product") Product product, BindingResult errors,
+                         @RequestParam(required = false) Long supplierId, Model model,
                          RedirectAttributes redirect) {
         if (errors.hasErrors()) {
             return showForm(model, null);
         }
         try {
-            service.add(product);
+            service.add(product, supplierId);
         } catch (IllegalArgumentException ex) {
             model.addAttribute("error", ex.getMessage());
             return showForm(model, null);
         }
-        planning.recalculateAll();   // give the new product its forecast (F1) and safety stock (F2)
+        planning.recalculateAll();   // give the new product its forecast, safety stock, EOQ and reorder point
         redirect.addFlashAttribute("message", "Product added.");
         return "redirect:/products";
     }
@@ -59,12 +63,13 @@ public class ProductController {
 
     @PostMapping("/{id}")
     public String update(@PathVariable Long id, @Valid @ModelAttribute("product") Product product,
-                         BindingResult errors, Model model, RedirectAttributes redirect) {
+                         BindingResult errors, @RequestParam(required = false) Long supplierId, Model model,
+                         RedirectAttributes redirect) {
         if (errors.hasErrors()) {
             return showForm(model, id);
         }
         try {
-            service.update(id, product);
+            service.update(id, product, supplierId);
         } catch (IllegalArgumentException ex) {
             model.addAttribute("error", ex.getMessage());
             return showForm(model, id);
@@ -78,6 +83,7 @@ public class ProductController {
     private String showForm(Model model, Long id) {
         model.addAttribute("formTitle", id == null ? "Add product" : "Edit product");
         model.addAttribute("formAction", id == null ? "/products" : "/products/" + id);
+        model.addAttribute("suppliers", leadTimes.allSuppliers());
         return "product-form";
     }
 }

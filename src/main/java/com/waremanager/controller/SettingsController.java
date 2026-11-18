@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-/** Planning settings used by F1 and F2 (view: settings.html). */
+/** Planning settings used by F1-F4 (view: settings.html). */
 @Controller
 @RequestMapping("/settings")
 public class SettingsController {
