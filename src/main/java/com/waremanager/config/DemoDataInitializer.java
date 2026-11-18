@@ -9,7 +9,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
- * On startup, adds sample products, sales history and temperatures for F1 and F2 if there is no
+ * On startup, adds sample products, sales history and temperatures for F1-F4 if there is no
  * sales history yet. Turn it off with app.demo-data.enabled=false (or DEMO_DATA=false).
  */
 @Component

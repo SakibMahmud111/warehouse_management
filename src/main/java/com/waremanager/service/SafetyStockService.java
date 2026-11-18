@@ -18,7 +18,7 @@ import java.util.List;
  * Safety stock = z × sqrt(LT × σd² + d² × σLT²) where
  *  d   = forecast demand per day during the lead time (from F1),
  *  σd  = forecast error per day (from F1),
- *  LT  = supplier lead time in days, σLT = how much it varies (from the product, copied to the policy by PlanningService),
+ *  LT  = lead time in days, σLT = how much it varies (from F6, stored on the policy by PlanningService),
  *  z   = from the service level.
  * Service level: the setting (95%) for steady products; for winter products the profit-optimal
  * critical ratio, because unsold winter stock loses value (see InventoryMath.criticalRatio).

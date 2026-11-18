@@ -10,4 +10,5 @@ public interface InventoryPolicyRepository extends JpaRepository<InventoryPolicy
 
     Optional<InventoryPolicy> findByProduct(Product product);
 
+    long countByBelowReorderPointTrue();
 }

@@ -27,7 +27,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Trains the F1 machine-learning model in Python ({@code ml/model_worker.py}, scikit-learn).
+ * Runs the prediction models of F1, F6, F7 and F20 in Python ({@code ml/model_worker.py}: scikit-learn,
+ * SciPy, NumPy).
  *
  * How it works:
  * <ol>
@@ -35,7 +36,7 @@ import java.util.concurrent.TimeUnit;
  *   <li>Each request is one line of JSON written to the script; the answer is one line of JSON back.</li>
  *   <li>If Python or scikit-learn is missing, or the script stops answering, the same formulas in
  *       {@link JavaModelTrainer} are used instead, so the app always works and gives the same numbers.
- *       The F1 page shows which one is in use.</li>
+ *       The F1, F6, F7 and F20 pages show which one is in use.</li>
  * </ol>
  * No web framework is involved: the script is a child process of this MVC app, not a server.
  *
@@ -87,7 +88,59 @@ public class PythonModelTrainer implements ModelTrainer {
                 answer.get("r2").asDouble(), answer.get("residual_std").asDouble(), answer.get("points").asInt());
     }
 
-    // ---------------------------------------------------------------- shown on the F1 page
+    @Override
+    public synchronized LeadTimeFit leadTime(double[] leadDaysOldestFirst) {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("task", "lead_time");
+        request.put("days", leadDaysOldestFirst);
+        JsonNode answer = ask(request);
+        if (answer == null) {
+            return JavaModelTrainer.INSTANCE.leadTime(leadDaysOldestFirst);
+        }
+        return new LeadTimeFit(answer.get("predicted_days").asDouble(), answer.get("spread_days").asDouble(),
+                answer.get("trend_per_delivery").asDouble());
+    }
+
+    @Override
+    public synchronized StockoutRisk stockoutRisk(double stock, double demand, int horizonDays, double dailyErrorStd,
+                                                  double leadTimeStdDays) {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("task", "stockout_risk");
+        request.put("stock", stock);
+        request.put("demand", demand);
+        request.put("horizon_days", horizonDays);
+        request.put("daily_error_std", dailyErrorStd);
+        request.put("lead_time_std_days", leadTimeStdDays);
+        JsonNode answer = ask(request);
+        if (answer == null) {
+            return JavaModelTrainer.INSTANCE.stockoutRisk(stock, demand, horizonDays, dailyErrorStd, leadTimeStdDays);
+        }
+        return new StockoutRisk(answer.get("probability").asDouble(), answer.get("demand_std").asDouble());
+    }
+
+    @Override
+    public synchronized AnomalyCheck anomalies(double[] actual, double[] expected, double thresholdPercent,
+                                               double minUnits) {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("task", "anomalies");
+        request.put("actual", actual);
+        request.put("expected", expected);
+        request.put("threshold_percent", thresholdPercent);
+        request.put("min_units", minUnits);
+        JsonNode answer = ask(request);
+        if (answer == null || answer.get("unusual").size() != actual.length) {
+            return JavaModelTrainer.INSTANCE.anomalies(actual, expected, thresholdPercent, minUnits);
+        }
+        boolean[] unusual = new boolean[actual.length];
+        double[] deviation = new double[actual.length];
+        for (int i = 0; i < actual.length; i++) {
+            unusual[i] = answer.get("unusual").get(i).asBoolean();
+            deviation[i] = answer.get("deviation_percent").get(i).asDouble();
+        }
+        return new AnomalyCheck(unusual, deviation);
+    }
+
+    // ---------------------------------------------------------------- shown on the F1, F6, F7 and F20 pages
 
     /** True while the models are trained by Python. */
     public synchronized boolean isUsingPython() {
@@ -191,8 +244,8 @@ public class PythonModelTrainer implements ModelTrainer {
             toPython = new BufferedWriter(new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8));
             fromPython = lines;
             status = "Python " + hello.path("python").asText() + " with scikit-learn " + hello.path("sklearn").asText()
-                    + " (" + script + ")";
-            log.info("F1 machine-learning model is trained by {}", status);
+                    + ", SciPy " + hello.path("scipy").asText() + ", NumPy " + hello.path("numpy").asText() + " (" + script + ")";
+            log.info("Prediction models (F1, F6, F7, F20) run in {}", status);
             return null;
         } catch (IOException ex) {
             process.destroyForcibly();
@@ -251,7 +304,7 @@ public class PythonModelTrainer implements ModelTrainer {
 
     private void useJava(String reason) {
         status = "Java backup (Python not used: " + reason + ")";
-        log.warn("F1 machine-learning model: {}. Install Python 3 and run 'pip install -r ml/requirements.txt', then restart.", status);
+        log.warn("Prediction models (F1, F6, F7, F20): {}. Install Python 3 and run 'pip install -r ml/requirements.txt', then restart.", status);
     }
 
     /** Called by Spring when the app stops: closing the input ends the Python loop. */
