@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('F14 Recall impact')}"></head>
+<body><header th:replace="~{fragments :: topbar}"></header>
+<main class="container wide">
+    <p class="eyebrow">F14 · QUALITY CONTROL</p><h1>Recall impact analysis</h1>
+    <p class="muted">Open a recall to hold remaining lot stock, block active reservations, and trace shipments already dispatched.</p>
+    <div th:replace="~{fragments :: messages}"></div>
+    <section class="panel"><h2>Open recall case</h2>
+        <form th:action="@{/recalls}" method="post">
+            <label>Batch</label><select name="batchId" required><option th:each="b : ${batches}" th:value="${b.id}" th:text="${b.batchNumber} + ' — ' + ${b.product.name} + ' — ' + ${b.binCode}"></option></select>
+            <label>Reason for recall</label><input name="reason" maxlength="500" required placeholder="Damaged packaging, contamination, etc.">
+            <button type="submit">Open recall and hold stock</button>
+        </form>
+    </section>
+    <section class="tablewrap"><h2>Recall cases</h2>
+        <table class="compact"><thead><tr><th>Case</th><th>Batch</th><th>Reason</th><th>Status</th><th>Details</th></tr></thead>
+        <tbody><tr th:each="r : ${recalls}"><td th:text="${r.id}"></td><td th:text="${r.batch.batchNumber}"></td><td th:text="${r.reason}"></td>
+            <td th:text="${r.active} ? 'ACTIVE' : 'CLOSED'"></td><td><a th:href="@{/recalls(id=${r.id})}">View impact</a></td></tr></tbody></table>
+    </section>
+    <section th:if="${chosen != null}" class="panel">
+        <h2 th:text="'Impact report: ' + ${chosen.batch.batchNumber}"></h2>
+        <p th:text="'Remaining stock: ' + ${chosen.batch.quantity} + ' units in bin ' + ${chosen.batch.binCode}"></p>
+        <p th:text="'Product: ' + ${chosen.batch.product.name} + ' · Quality hold: ' + ${chosen.batch.held}"></p>
+        <div class="inline-form"><a class="primary-link" th:href="@{/recalls/{id}/report.csv(id=${chosen.id})}">Export impact CSV</a>
+            <form th:if="${chosen.active}" th:action="@{/recalls/{id}/close(id=${chosen.id})}" method="post"><button class="small-button secondary" type="submit">Close recall (quality approved)</button></form>
+        </div>
+        <h3>Orders and reservations affected</h3>
+        <table class="compact"><thead><tr><th>Customer</th><th>Order</th><th>Units</th><th>Status</th></tr></thead><tbody>
+            <tr th:each="r : ${reservations}"><td th:text="${r.orderLine.salesOrder.customerName}"></td><td th:text="${r.orderLine.salesOrder.id}"></td><td th:text="${r.quantity}"></td><td th:text="${r.status}"></td></tr>
+            <tr th:if="${#lists.isEmpty(reservations)}"><td colspan="4">No reservations on this batch.</td></tr>
+        </tbody></table>
+        <h3>Previously shipped orders</h3>
+        <table class="compact"><thead><tr><th>Customer</th><th>Order</th><th>Units</th><th>Shipped at</th></tr></thead><tbody>
+            <tr th:each="s : ${shipments}"><td th:text="${s.orderLine.salesOrder.customerName}"></td><td th:text="${s.orderLine.salesOrder.id}"></td><td th:text="${s.quantity}"></td><td th:text="${s.shippedAt}"></td></tr>
+            <tr th:if="${#lists.isEmpty(shipments)}"><td colspan="4">No shipped units from this batch.</td></tr>
+        </tbody></table>
+    </section>
+</main></body></html>

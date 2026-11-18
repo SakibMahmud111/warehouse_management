@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('F18 Scarcity allocation')}"></head>
+<body><header th:replace="~{fragments :: topbar}"></header>
+<main class="container wide">
+    <p class="eyebrow">F18 · ORDER FULFILLMENT</p><h1>Allocation under scarcity</h1>
+    <p class="muted">Preview demand from draft/partial orders, compare it against eligible stock, and allocate using one consistent rule. The system keeps partial allocations and backorders.</p>
+    <div th:replace="~{fragments :: messages}"></div>
+    <section class="panel"><h2>Choose an allocation rule</h2>
+        <form method="get" th:action="@{/scarcity}" class="inline-form">
+            <select name="rule"><option value="PRIORITY" th:selected="${rule.name() == 'PRIORITY'}">Customer priority tier (1 first)</option>
+            <option value="ORDER_DATE" th:selected="${rule.name() == 'ORDER_DATE'}">Oldest order first</option>
+            <option value="FAIR_SHARE" th:selected="${rule.name() == 'FAIR_SHARE'}">Proportional fair share</option></select>
+            <button type="submit" class="small-button">Preview allocation</button>
+        </form>
+    </section>
+    <section class="tablewrap"><h2>Preview (no stock changed yet)</h2>
+        <table class="compact"><thead><tr><th>Order</th><th>Customer / priority</th><th>Product</th><th>Unfilled demand</th><th>Will reserve</th><th>Will backorder</th></tr></thead><tbody>
+            <tr th:each="d : ${decisions}"><td><a th:href="@{/orders(id=${d.line.salesOrder.id})}" th:text="${d.line.salesOrder.id}"></a></td>
+                <td th:text="${d.line.salesOrder.customerName} + ' (tier ' + ${d.line.salesOrder.priority} + ')' "></td>
+                <td th:text="${d.line.product.name}"></td><td th:text="${d.requested}"></td><td th:text="${d.allocated}"></td>
+                <td><span class="badge" th:classappend="${d.backordered > 0} ? ' danger' : ' ok'" th:text="${d.backordered}"></span></td></tr>
+            <tr th:if="${#lists.isEmpty(decisions)}"><td colspan="6">No pending demand to allocate. Create draft orders first.</td></tr>
+        </tbody></table>
+    </section>
+    <form th:if="${!#lists.isEmpty(decisions)}" th:action="@{/scarcity}" method="post">
+        <input type="hidden" name="rule" th:value="${rule}">
+        <button type="submit">Commit allocation using this rule</button>
+        <p class="help">Availability is rechecked under a database lock before committing; results may differ if another user changed stock.</p>
+    </form>
+</main></body></html>

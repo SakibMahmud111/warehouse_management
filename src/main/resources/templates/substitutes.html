@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('F16 Substitutes')}"></head>
+<body><header th:replace="~{fragments :: topbar}"></header>
+<main class="container wide">
+    <p class="eyebrow">F16 · ORDER FULFILLMENT</p><h1>Substitute-product matching</h1>
+    <p th:text="'Requested: ' + ${line.product.name} + ' · ' + ${line.quantity} + ' units'"></p>
+    <p class="muted" th:text="'Required category: ' + ${line.product.category} + ' · Required attributes: ' + ${line.product.keyAttributes}"></p>
+    <p class="help">Eligible alternatives must match the category and every required key=value attribute and have enough eligible unreserved units.</p>
+    <section class="tablewrap"><table class="compact"><thead><tr><th>Suggested product</th><th>Attributes</th><th>Stock available</th><th>Match score</th><th>Choose</th></tr></thead><tbody>
+        <tr th:each="c : ${alternatives}"><td th:text="${c.product.name}"></td><td th:text="${c.product.keyAttributes}"></td><td th:text="${c.available}"></td><td th:text="${c.score}"></td>
+            <td><form th:action="@{/substitutes}" method="post"><input type="hidden" name="lineId" th:value="${line.id}"><input type="hidden" name="productId" th:value="${c.product.id}"><button class="small-button" type="submit">Use alternative</button></form></td></tr>
+        <tr th:if="${#lists.isEmpty(alternatives)}"><td colspan="5">No eligible substitutes found. Check product attributes or add stock.</td></tr>
+    </tbody></table></section>
+    <a th:href="@{/orders(id=${line.salesOrder.id})}">Back to order</a>
+</main></body></html>

@@ -22,6 +22,14 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Pages anyone can open without signing in
                 .requestMatchers("/css/**", "/login", "/error").permitAll()
+                .requestMatchers("/batches", "/batches/**", "/cold-chain", "/cold-chain/**")
+                    .hasAnyRole("ADMIN", "WAREHOUSE_MANAGER", "WAREHOUSE_STAFF")
+                .requestMatchers("/recalls", "/recalls/**")
+                    .hasAnyRole("ADMIN", "WAREHOUSE_MANAGER")
+                .requestMatchers("/orders", "/orders/**", "/substitutes", "/substitutes/**", "/scarcity", "/scarcity/**")
+                    .hasAnyRole("ADMIN", "SALES_COORDINATOR")
+                .requestMatchers("/consolidation", "/consolidation/**")
+                    .hasAnyRole("ADMIN", "PURCHASING_OFFICER")
                 // Everything else needs a signed-in user.
                 // Later sprints can add role rules here, e.g.
                 // .requestMatchers("/purchasing/**").hasAnyRole("PURCHASING_OFFICER", "ADMIN")

@@ -18,4 +18,6 @@ public interface ReorderSuggestionRepository extends JpaRepository<ReorderSugges
     List<ReorderSuggestion> findTop30ByOrderByCreatedAtDescIdDesc();
 
     long countByStatus(SuggestionStatus status);
+
+    List<ReorderSuggestion> findByStatus(SuggestionStatus status);
 }
