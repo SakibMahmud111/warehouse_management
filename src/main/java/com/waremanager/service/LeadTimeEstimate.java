@@ -47,8 +47,8 @@ public class LeadTimeEstimate {
     /** Change in lead time per delivery (positive = the supplier is getting slower). */
     public double getTrendPerDelivery() { return trendPerDelivery; }
 
-    /** Short label for tables, e.g. "F6 (8 deliveries)" or "Manual". */
+    /** Short label for tables, e.g. "Predicted (8 deliveries)" or "Manual (product)". */
     public String getSourceLabel() {
-        return fromDeliveries ? "F6 prediction (" + deliveries + " deliveries)" : "Manual (product)";
+        return fromDeliveries ? "Predicted (" + deliveries + " deliveries)" : "Manual (product)";
     }
 }

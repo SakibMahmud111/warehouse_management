@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('F1 Demand forecasting')}"></head>
+<head th:replace="~{fragments :: head('Demand forecasting')}"></head>
 <body>
 <header th:replace="~{fragments :: topbar}"></header>
 <main class="container wide">
     <div class="heading">
-        <div><p class="eyebrow">F1 · DEMAND FORECASTING</p><h1>Demand forecast</h1></div>
+        <div><p class="eyebrow">DEMAND FORECASTING</p><h1>Demand forecast</h1></div>
         <form th:action="@{/forecast/recalculate}" method="post">
             <input type="hidden" name="productId" th:if="${selected}" th:value="${selected.id}">
             <button type="submit">Recalculate now</button>
@@ -51,7 +51,7 @@
                     <span th:if="${outlook.lastReadingDate != null}"> · last reading
                         <span th:text="${#temporals.format(outlook.lastReadingDate, 'd MMM yyyy')}">date</span></span>
                 </p>
-                <p class="small"><a th:href="@{/eoq}">See how much winter stock to buy (F4) →</a></p>
+                <p class="small"><a th:href="@{/eoq}">See how much winter stock to buy →</a></p>
             </div>
             <div>
                 <p class="muted small">Cold days in past winters (October average in brackets)</p>
@@ -93,7 +93,7 @@
             <span th:if="${data.model.eventFactor != 1.0}">Holiday/promotion weeks:
                 ×<span th:text="${#numbers.formatDecimal(data.model.eventFactor, 1, 2)}">1.00</span>.</span>
             Average weekly error: ±<span th:text="${#numbers.formatDecimal(data.model.meanAbsoluteError, 1, 1)}">0</span> units
-            (standard deviation <span th:text="${#numbers.formatDecimal(data.model.errorStd, 1, 1)}">0</span>, used by F2).
+            (standard deviation <span th:text="${#numbers.formatDecimal(data.model.errorStd, 1, 1)}">0</span>, used for the safety stock).
         </p>
 
         <div th:if="${!chart.empty}">
@@ -200,7 +200,7 @@
     </section>
 
     <section class="panel small">
-        <h2>How F1 works</h2>
+        <h2>How the forecast works</h2>
         <ol>
             <li><strong>Winter length (machine learning):</strong> for each past winter, count the cold days and note the average
                 October temperature. A straight line is fitted through those points (linear regression). This October's

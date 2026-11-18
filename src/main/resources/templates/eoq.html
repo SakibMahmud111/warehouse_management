@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('F4 Order quantity')}"></head>
+<head th:replace="~{fragments :: head('Order quantity')}"></head>
 <body>
 <header th:replace="~{fragments :: topbar}"></header>
 <main class="container wide">
     <div class="heading">
-        <div><p class="eyebrow">F4 · ECONOMIC ORDER QUANTITY RECOMMENDATIONS</p><h1>How much to order</h1></div>
+        <div><p class="eyebrow">ECONOMIC ORDER QUANTITY RECOMMENDATIONS</p><h1>How much to order</h1></div>
         <form th:action="@{/eoq/recalculate}" method="post"><button type="submit">Recalculate now</button></form>
     </div>
     <div th:replace="~{fragments :: messages}"></div>
@@ -14,7 +14,7 @@
     <h2>Winter products: stock for the predicted winter, not the usual one</h2>
     <section class="panel small" th:with="o=${outlook}">
         <p>
-            F1 predicts <strong th:text="${o.predictedDays}">0</strong> cold days for <span th:text="${o.seasonLabel}">winter</span>
+            The forecast predicts <strong th:text="${o.predictedDays}">0</strong> cold days for <span th:text="${o.seasonLabel}">winter</span>
             (likely <span th:text="${o.lowDays} + '–' + ${o.highDays}">0–0</span>; normal is <span th:text="${o.normalDays}">0</span>).
             <span th:if="${o.remainingDays > 0}"><strong th:text="${o.remainingDays}">0</strong> cold days are still to come
                 (<span th:text="${#temporals.format(o.expectedStart, 'd MMM')}">date</span> –
@@ -79,7 +79,7 @@
     <h2>Steady products: Economic Order Quantity</h2>
     <section class="panel small">
         <p><span class="formula">EOQ = √(2 × D × S ÷ H)</span>, rounded up to the supplier's minimum order.</p>
-        <p class="muted">D = forecast units per year (F1) · S = cost of one order
+        <p class="muted">D = forecast units per year · S = cost of one order
             (৳<span th:text="${#numbers.formatDecimal(settings.orderingCost, 1, 'COMMA', 0, 'POINT')}">0</span>) ·
             H = cost of holding one unit for a year (unit cost × <span th:text="${settings.holdingRatePercent}">20</span>%).
             Yearly cost = (D ÷ Q) × S + (Q ÷ 2) × H.</p>
@@ -125,7 +125,7 @@
             </tbody>
         </table>
     </div>
-    <p class="muted small">The recommended quantity is used for reorder suggestions in <a th:href="@{/reorder-points}">F3</a>.</p>
+    <p class="muted small">The recommended quantity is used for reorder suggestions on the <a th:href="@{/reorder-points}">Reorder points</a> page.</p>
 </main>
 </body>
 </html>

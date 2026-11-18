@@ -1,19 +1,19 @@
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('F2 Safety stock')}"></head>
+<head th:replace="~{fragments :: head('Safety stock')}"></head>
 <body>
 <header th:replace="~{fragments :: topbar}"></header>
 <main class="container wide">
     <div class="heading">
-        <div><p class="eyebrow">F2 · DYNAMIC SAFETY-STOCK CALCULATION</p><h1>Safety stock</h1></div>
+        <div><p class="eyebrow">DYNAMIC SAFETY-STOCK CALCULATION</p><h1>Safety stock</h1></div>
         <form th:action="@{/safety-stock/recalculate}" method="post"><button type="submit">Recalculate now</button></form>
     </div>
     <div th:replace="~{fragments :: messages}"></div>
 
     <section class="panel small">
         <p><span class="formula">safety stock = z × √(LT × σd² + d² × σLT²)</span></p>
-        <p class="muted">d = forecast units per day during the lead time (F1) · σd = forecast error per day (F1) ·
-            LT = supplier lead time in days and σLT = how much it varies (<a th:href="@{/lead-times}">F6</a>) · z = from the service level.</p>
+        <p class="muted">d = forecast units per day during the lead time · σd = forecast error per day ·
+            LT = supplier lead time in days and σLT = how much it varies (<a th:href="@{/lead-times}">lead-time prediction</a>) · z = from the service level.</p>
         <p class="muted">Steady products use the service level from <a th:href="@{/settings}">Settings</a>
             (<span th:text="${settings.serviceLevelPercent}">95</span>%).
             Winter products use the <strong>most profitable</strong> service level, because unsold winter stock must be cleared cheaply:
@@ -74,7 +74,7 @@
             </tbody>
         </table>
     </div>
-    <p class="muted small">The safety stock in the "Used" column goes into the reorder point (<a th:href="@{/reorder-points}">F3</a>).</p>
+    <p class="muted small">The safety stock in the "Used" column goes into the reorder point (<a th:href="@{/reorder-points}">Reorder points</a>).</p>
 </main>
 </body>
 </html>

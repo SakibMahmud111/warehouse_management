@@ -30,7 +30,7 @@
                 <td class="num" th:text="${#numbers.formatDecimal(item.unitCost, 1, 'COMMA', 0, 'POINT')}">0</td>
                 <td class="num" th:text="${#numbers.formatDecimal(item.sellingPrice, 1, 'COMMA', 0, 'POINT')}">0</td>
                 <td class="num" th:text="${#numbers.formatDecimal(item.leadTimeDays, 1, 'COMMA', 0, 'POINT')} + ' days'"
-                    title="Manual value; F6 replaces it once 3 deliveries are recorded">7 days</td>
+                    title="Manual value; replaced by the prediction once 3 deliveries are recorded">7 days</td>
                 <td><a th:href="@{/products/{id}/edit(id=${item.id})}">Edit</a></td>
             </tr>
             <tr th:if="${#lists.isEmpty(products)}"><td colspan="11">No products yet. Add your first item.</td></tr>

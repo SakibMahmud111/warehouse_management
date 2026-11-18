@@ -32,7 +32,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -40,6 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -105,6 +109,25 @@ class PlanningFeatureTests {
            .andExpect(content().string(containsString("Probability model calculated by")));
         mvc.perform(get("/anomalies")).andExpect(status().isOk()).andExpect(content().string(containsString("Unusual sales weeks")))
            .andExpect(content().string(containsString("Anomaly check calculated by")));
+    }
+
+    @Test
+    void pagesShowFeatureNamesWithoutFeatureNumbers() throws Exception {
+        Pattern featureNumber = Pattern.compile("\\bF\\d{1,2}\\b");   // F1, F2, ... F20 must not appear on any page
+        List<String> pages = new ArrayList<>(List.of("/dashboard", "/products", "/products/new", "/forecast", "/safety-stock",
+                "/reorder-points", "/eoq", "/lead-times", "/stockout-risk", "/anomalies", "/settings"));
+        for (Product product : products.findAll()) {
+            pages.add("/products/" + product.getId() + "/edit");
+            pages.add("/forecast?productId=" + product.getId());
+        }
+        for (String page : pages) {
+            String html = mvc.perform(get(page)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString()
+                    .replaceAll("<input[^>]*type=\"hidden\"[^>]*>", "");   // skip hidden fields such as the random CSRF token
+            Matcher found = featureNumber.matcher(html);
+            if (found.find()) {
+                fail(page + " shows the feature number \"" + found.group() + "\"");
+            }
+        }
     }
 
     @Test
@@ -295,7 +318,7 @@ class PlanningFeatureTests {
             }
             assertNotNull(product.getSupplier(), "demo product without supplier: " + product.getName());
             InventoryPolicy policy = policies.findByProduct(product).orElseThrow();
-            assertTrue(policy.getLeadTimeSource().startsWith("F6 prediction"), policy.getLeadTimeSource());
+            assertTrue(policy.getLeadTimeSource().startsWith("Predicted"), policy.getLeadTimeSource());
         }
         // Rahman Textiles has been getting slower: predicted lead time is above the manual 12 days
         assertTrue(policies.findByProduct(bySku("WM-BLK-01")).orElseThrow().getLeadTimeDays() > 12.5);

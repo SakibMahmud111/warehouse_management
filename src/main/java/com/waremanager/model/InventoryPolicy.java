@@ -42,7 +42,7 @@ public class InventoryPolicy {
     @ColumnDefault("2")
     private double leadTimeStdDays = 2;
 
-    /** "F6 prediction (8 deliveries)" or "Manual (product)". */
+    /** "Predicted (8 deliveries)" or "Manual (product)". */
     @Column(name = "lead_time_source", length = 100)
     private String leadTimeSource;
 

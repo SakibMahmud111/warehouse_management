@@ -110,7 +110,7 @@ public class ReplenishmentController {
                               RedirectAttributes redirect) {
         LocalDate date = orderedOn == null ? LocalDate.now() : orderedOn;
         return suggestionAction(() -> reorderPoints.markOrdered(id, date),
-                "Marked as ordered: the units now count as on order, and F6 recorded a purchase order.", redirect);
+                "Marked as ordered: the units now count as on order, and a purchase order was recorded.", redirect);
     }
 
     /** {@code receivedOn} defaults to today and must be at least 1 day after the order date. */
@@ -120,7 +120,7 @@ public class ReplenishmentController {
                                RedirectAttributes redirect) {
         LocalDate date = receivedOn == null ? LocalDate.now() : receivedOn;
         return suggestionAction(() -> reorderPoints.markReceived(id, date),
-                "Marked as received: the units were added to stock and F6 learned the real lead time.", redirect);
+                "Marked as received: the units were added to stock and the real lead time was learned.", redirect);
     }
 
     @PostMapping("/reorder-points/suggestions/{id}/dismiss")

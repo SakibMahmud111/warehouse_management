@@ -57,7 +57,7 @@ public class ReorderPointService {
         String status;
 
         if (noDemand) {
-            status = "No forecast demand yet (record weekly sales in F1)";
+            status = "No forecast demand yet (record weekly sales on the Forecast page)";
         } else if (product.isSeasonal()) {
             int order = policy.getOrderQuantity();          // from the winter plan (F4)
             LocalDate orderBy = policy.getOrderByDate();
@@ -65,7 +65,7 @@ public class ReorderPointService {
             if (order > 0 && (below || orderSoon)) {
                 suggestQuantity = order;
                 reason = "Winter stock: order by " + orderBy.format(DAY)
-                        + " so it arrives before the cold days (winter plan, F4).";
+                        + " so it arrives before the cold days (winter plan).";
                 status = "Order " + order + " by " + orderBy.format(DAY);
             } else if (order > 0) {
                 status = "Planned: order " + order + " by " + orderBy.format(DAY);

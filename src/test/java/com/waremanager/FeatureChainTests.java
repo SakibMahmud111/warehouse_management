@@ -80,13 +80,13 @@ class FeatureChainTests {
 
     @Test
     void everyFeatureHasAWorkingPage() throws Exception {
-        mvc.perform(get("/forecast")).andExpect(status().isOk()).andExpect(content().string(containsString("F1 · DEMAND FORECASTING")));
-        mvc.perform(get("/safety-stock")).andExpect(status().isOk()).andExpect(content().string(containsString("F2 · DYNAMIC SAFETY-STOCK")));
-        mvc.perform(get("/reorder-points")).andExpect(status().isOk()).andExpect(content().string(containsString("F3 · REORDER-POINT")));
-        mvc.perform(get("/eoq")).andExpect(status().isOk()).andExpect(content().string(containsString("F4 · ECONOMIC ORDER QUANTITY")));
-        mvc.perform(get("/lead-times")).andExpect(status().isOk()).andExpect(content().string(containsString("F6 · SUPPLIER LEAD-TIME")));
-        mvc.perform(get("/stockout-risk")).andExpect(status().isOk()).andExpect(content().string(containsString("F7 · STOCKOUT PROBABILITY")));
-        mvc.perform(get("/anomalies")).andExpect(status().isOk()).andExpect(content().string(containsString("F20 · DEMAND ANOMALY")));
+        mvc.perform(get("/forecast")).andExpect(status().isOk()).andExpect(content().string(containsString("DEMAND FORECASTING")));
+        mvc.perform(get("/safety-stock")).andExpect(status().isOk()).andExpect(content().string(containsString("DYNAMIC SAFETY-STOCK")));
+        mvc.perform(get("/reorder-points")).andExpect(status().isOk()).andExpect(content().string(containsString("REORDER-POINT")));
+        mvc.perform(get("/eoq")).andExpect(status().isOk()).andExpect(content().string(containsString("ECONOMIC ORDER QUANTITY")));
+        mvc.perform(get("/lead-times")).andExpect(status().isOk()).andExpect(content().string(containsString("SUPPLIER LEAD-TIME")));
+        mvc.perform(get("/stockout-risk")).andExpect(status().isOk()).andExpect(content().string(containsString("STOCKOUT PROBABILITY")));
+        mvc.perform(get("/anomalies")).andExpect(status().isOk()).andExpect(content().string(containsString("DEMAND ANOMALY")));
     }
 
     @Test
@@ -130,7 +130,7 @@ class FeatureChainTests {
         // ---------- F6 -> planning: the learned lead time replaces the manual 10 days ----------
         assertEquals(6.0, policy.getLeadTimeDays(), 1e-9);
         assertEquals(0.5, policy.getLeadTimeStdDays(), 1e-9);       // constant deliveries -> minimum spread
-        assertTrue(policy.getLeadTimeSource().startsWith("F6 prediction"));
+        assertTrue(policy.getLeadTimeSource().startsWith("Predicted"));
 
         // ---------- F1 + F6 -> F2: safety stock follows the formula ----------
         double leadTimeDemand = DemandForecaster.demandOverDays(weeks, today, 6);

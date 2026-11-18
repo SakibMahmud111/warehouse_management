@@ -245,7 +245,7 @@ public class PythonModelTrainer implements ModelTrainer {
             fromPython = lines;
             status = "Python " + hello.path("python").asText() + " with scikit-learn " + hello.path("sklearn").asText()
                     + ", SciPy " + hello.path("scipy").asText() + ", NumPy " + hello.path("numpy").asText() + " (" + script + ")";
-            log.info("Prediction models (F1, F6, F7, F20) run in {}", status);
+            log.info("Prediction models run in {}", status);
             return null;
         } catch (IOException ex) {
             process.destroyForcibly();
@@ -304,7 +304,7 @@ public class PythonModelTrainer implements ModelTrainer {
 
     private void useJava(String reason) {
         status = "Java backup (Python not used: " + reason + ")";
-        log.warn("Prediction models (F1, F6, F7, F20): {}. Install Python 3 and run 'pip install -r ml/requirements.txt', then restart.", status);
+        log.warn("Prediction models: {}. Install Python 3 and run 'pip install -r ml/requirements.txt', then restart.", status);
     }
 
     /** Called by Spring when the app stops: closing the input ends the Python loop. */

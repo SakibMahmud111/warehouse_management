@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('F6 Lead times')}"></head>
+<head th:replace="~{fragments :: head('Lead times')}"></head>
 <body>
 <header th:replace="~{fragments :: topbar}"></header>
 <main class="container wide">
     <div class="heading">
-        <div><p class="eyebrow">F6 · SUPPLIER LEAD-TIME PREDICTION</p><h1>Supplier lead times</h1></div>
+        <div><p class="eyebrow">SUPPLIER LEAD-TIME PREDICTION</p><h1>Supplier lead times</h1></div>
         <form th:action="@{/lead-times/recalculate}" method="post"><button type="submit">Recalculate now</button></form>
     </div>
     <div th:replace="~{fragments :: messages}"></div>
@@ -16,8 +16,8 @@
         <p><span class="formula">prediction = 0.3 × newest lead time + 0.7 × previous prediction</span>
             (each new delivery counts 30%, so a supplier that is getting slower is noticed quickly).</p>
         <p class="muted">Lead time = days from ordering to receiving. With fewer than 3 recorded deliveries the product's manual value is used.
-            The prediction and its spread feed <a th:href="@{/safety-stock}">F2 safety stock</a>, the winter order-by date in
-            <a th:href="@{/eoq}">F4</a>, and <a th:href="@{/stockout-risk}">F7 stockout risk</a>. Every receipt is compared with what was predicted
+            The prediction and its spread feed the <a th:href="@{/safety-stock}">safety stock</a>, the winter order-by date in the
+            <a th:href="@{/eoq}">winter stock plan</a>, and the <a th:href="@{/stockout-risk}">stockout risk</a>. Every receipt is compared with what was predicted
             when the order was placed.</p>
     </section>
 
@@ -70,7 +70,7 @@
                         <span class="badge ok" th:unless="${o.daysLate(today) > 0}">on time</span>
                     </td>
                 </tr>
-                <tr th:if="${#lists.isEmpty(openOrders)}"><td colspan="5">Nothing on order. Mark a suggestion as ordered on the <a th:href="@{/reorder-points}">F3 page</a>.</td></tr>
+                <tr th:if="${#lists.isEmpty(openOrders)}"><td colspan="5">Nothing on order. Mark a suggestion as ordered on the <a th:href="@{/reorder-points}">Reorder points page</a>.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -105,7 +105,7 @@
                 <input type="number" name="quantity" min="1" placeholder="Quantity" required aria-label="Quantity">
                 <button type="submit">Save</button>
             </form>
-            <p class="help">For deliveries from before the system was used. New orders are recorded automatically from the F3 page.</p>
+            <p class="help">For deliveries from before the system was used. New orders are recorded automatically from the Reorder points page.</p>
         </div>
         <div class="panel">
             <h2>Add a supplier</h2>

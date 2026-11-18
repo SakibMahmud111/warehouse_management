@@ -23,6 +23,6 @@ public class PlanningInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         int count = planning.recalculateAll();
-        log.info("Planning run finished for {} products (F1 forecast, F2 safety stock, F4 order quantity, F3 reorder points).", count);
+        log.info("Planning run finished for {} products (forecast, safety stock, order quantity, reorder points).", count);
     }
 }
