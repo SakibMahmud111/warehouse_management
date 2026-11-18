@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('F16–17 Orders')}"></head>
+<body><header th:replace="~{fragments :: topbar}"></header>
+<main class="container wide">
+    <p class="eyebrow">F16 SUBSTITUTES · F17 RESERVATIONS</p><h1>Sales orders and stock reservations</h1>
+    <p class="muted">Create a draft, add products, use substitutes if needed, then confirm. Confirmation is atomic; cancellation releases its reserved units.</p>
+    <div th:replace="~{fragments :: messages}"></div>
+    <section class="panel"><h2>New sales order</h2><form th:action="@{/orders}" method="post">
+        <div class="form-grid"><div><label>Customer</label><input name="customerName" maxlength="120" required></div>
+        <div><label>Priority</label><select name="priority"><option value="1">1 — High</option><option value="2" selected>2 — Normal</option><option value="3">3 — Low</option></select></div></div>
+        <button type="submit">Create draft</button>
+    </form></section>
+    <section class="tablewrap"><h2>Sales orders</h2><table class="compact"><thead><tr><th>ID</th><th>Customer</th><th>Priority</th><th>Status</th><th>Created</th><th>Details</th></tr></thead><tbody>
+        <tr th:each="o : ${orders}"><td th:text="${o.id}"></td><td th:text="${o.customerName}"></td><td th:text="${o.priority}"></td><td><span class="badge" th:text="${o.status}"></span></td><td th:text="${o.createdAt}"></td><td><a th:href="@{/orders(id=${o.id})}">Manage</a></td></tr>
+    </tbody></table></section>
+    <section class="panel" th:if="${selected != null}">
+        <h2 th:text="'Order #' + ${selected.id} + ' — ' + ${selected.customerName}"></h2>
+        <p>Current status: <span class="badge" th:text="${selected.status}"></span></p>
+        <form th:if="${selected.status.name() == 'DRAFT'}" th:action="@{/orders/{id}/lines(id=${selected.id})}" method="post">
+            <h3>Add order line</h3><div class="form-grid">
+                <div><label>Product</label><select name="productId"><option th:each="p : ${products}" th:value="${p.id}" th:text="${p.name} + ' (' + ${p.sku} + ')' "></option></select></div>
+                <div><label>Units</label><input name="quantity" type="number" min="1" required></div>
+                <div><label>Minimum remaining shelf life (days)</label><input name="minShelfLifeDays" type="number" min="0" max="3650" value="0"></div>
+            </div><button type="submit">Add line</button>
+        </form>
+        <h3>Items</h3><table class="compact"><thead><tr><th>Product</th><th>Ordered</th><th>Reserved</th><th>Backordered</th><th>Required shelf life</th><th>Alternative</th></tr></thead><tbody>
+            <tr th:each="l : ${lines}"><td th:text="${l.product.name}"></td><td th:text="${l.quantity}"></td><td th:text="${l.reservedQuantity}"></td><td th:text="${l.backorderedQuantity}"></td><td th:text="${l.minShelfLifeDays} + ' days'"></td>
+                <td><a th:if="${selected.status.name() == 'DRAFT'}" th:href="@{/substitutes(lineId=${l.id})}">Find substitutes</a></td></tr>
+        </tbody></table>
+        <div class="inline-form">
+            <form th:if="${selected.status.name() == 'DRAFT' or selected.status.name() == 'PARTIAL'}" th:action="@{/orders/{id}/confirm(id=${selected.id})}" method="post"><button type="submit">Confirm and reserve all</button></form>
+            <form th:if="${selected.status.name() == 'CONFIRMED'}" th:action="@{/orders/{id}/ship(id=${selected.id})}" method="post"><button type="submit">Ship order</button></form>
+            <form th:if="${selected.status.name() != 'SHIPPED' and selected.status.name() != 'CANCELLED'}" th:action="@{/orders/{id}/cancel(id=${selected.id})}" method="post"><button class="small-button secondary" type="submit">Cancel and release reservations</button></form>
+        </div>
+        <p class="help">If stock is insufficient, open <a th:href="@{/scarcity}">F18 Scarcity</a> to allocate partial quantities using a transparent rule.</p>
+        <h3>Allocation and shipment history</h3>
+        <table class="compact"><thead><tr><th>Product</th><th>Batch</th><th>Units</th><th>Status</th></tr></thead><tbody>
+            <tr th:each="r : ${allocations}"><td th:text="${r.orderLine.product.name}"></td><td th:text="${r.batch == null} ? 'Unbatched inventory' : ${r.batch.batchNumber}"></td><td th:text="${r.quantity}"></td><td th:text="${r.status}"></td></tr>
+        </tbody></table>
+    </section>
+</main></body></html>

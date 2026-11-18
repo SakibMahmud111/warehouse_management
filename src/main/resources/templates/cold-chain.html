@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('F15 Cold chain')}"></head>
+<body><header th:replace="~{fragments :: topbar}"></header>
+<main class="container wide">
+    <p class="eyebrow">F15 · QUALITY CONTROL</p><h1>Cold-chain excursion handling</h1>
+    <p class="muted">Set min/max temperatures on the product form; create batches in storage bins; then record bin readings here.</p>
+    <div th:replace="~{fragments :: messages}"></div>
+    <section class="panel"><h2>Record temperature</h2><form th:action="@{/cold-chain/readings}" method="post">
+        <div class="form-grid"><div><label>Storage bin</label><input name="binCode" required maxlength="80" placeholder="COLD-A1"></div>
+        <div><label>Temperature (°C)</label><input name="celsius" required type="number" step="0.1" min="-100" max="100"></div></div>
+        <button type="submit">Save reading and check all batches</button>
+    </form></section>
+    <section class="tablewrap"><h2>Excursion incidents</h2>
+        <table class="compact"><thead><tr><th>Batch / bin</th><th>Temperature</th><th>Product limit</th><th>Status</th><th>Quality review</th></tr></thead><tbody>
+        <tr th:each="i : ${incidents}"><td><span th:text="${i.batch.batchNumber}"></span><br><span class="muted" th:text="${i.batch.binCode}"></span></td>
+            <td th:text="${i.reading.celsius} + '°C'"></td><td th:text="${i.batch.product.minTemperatureC} + ' to ' + ${i.batch.product.maxTemperatureC} + '°C'"></td>
+            <td th:text="${i.status}"></td>
+            <td><form th:if="${i.status.name() == 'HELD'}" th:action="@{/cold-chain/incidents/{id}/review(id=${i.id})}" method="post" class="inline-form">
+                <select name="decision"><option value="RELEASE">Release after review</option><option value="DISCARD">Discard stock</option></select>
+                <input name="reason" required maxlength="500" placeholder="Inspection findings"><button class="small-button" type="submit">Record decision</button>
+            </form><span th:if="${i.status.name() != 'HELD'}" th:text="${i.decisionReason}"></span></td>
+        </tr><tr th:if="${#lists.isEmpty(incidents)}"><td colspan="5">No temperature excursions detected.</td></tr>
+        </tbody></table>
+    </section>
+    <section class="tablewrap"><h2>Recent readings</h2><table class="compact"><thead><tr><th>Bin</th><th>Temperature</th><th>Measured at</th></tr></thead><tbody>
+        <tr th:each="r : ${readings}"><td th:text="${r.binCode}"></td><td th:text="${r.celsius} + '°C'"></td><td th:text="${r.measuredAt}"></td></tr>
+    </tbody></table></section>
+</main></body></html>

@@ -43,6 +43,17 @@ public class Product {
     @ColumnDefault("'General'")
     private String category = "General";
 
+    /** Required substitute attributes, written as key=value pairs separated by commas. */
+    @Size(max = 500)
+    @Column(name = "key_attributes", length = 500)
+    private String keyAttributes = "";
+
+    /** Null for ambient products; both values are Celsius. */
+    @Column(name = "min_temperature_c")
+    private Double minTemperatureC;
+    @Column(name = "max_temperature_c")
+    private Double maxTemperatureC;
+
     /** True for winter products (blankets, jackets...). Their demand follows the winter forecast. */
     @Column(nullable = false)
     @ColumnDefault("false")
@@ -119,6 +130,13 @@ public class Product {
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+
+    public String getKeyAttributes() { return keyAttributes; }
+    public void setKeyAttributes(String value) { keyAttributes = value; }
+    public Double getMinTemperatureC() { return minTemperatureC; }
+    public void setMinTemperatureC(Double value) { minTemperatureC = value; }
+    public Double getMaxTemperatureC() { return maxTemperatureC; }
+    public void setMaxTemperatureC(Double value) { maxTemperatureC = value; }
 
     public boolean isSeasonal() { return seasonal; }
     public void setSeasonal(boolean seasonal) { this.seasonal = seasonal; }

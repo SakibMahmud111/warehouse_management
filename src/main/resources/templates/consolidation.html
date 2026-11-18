@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('F19 Supplier consolidation')}"></head>
+<body><header th:replace="~{fragments :: topbar}"></header>
+<main class="container wide">
+    <p class="eyebrow">F19 · PURCHASING</p><h1>Supplier order consolidation</h1>
+    <p class="muted">Combine F3 reorder suggestions and F4 quantity recommendations by supplier. Adjust quantities, enforce supplier minimum order value, then confirm the grouped purchase order.</p>
+    <div th:replace="~{fragments :: messages}"></div>
+    <section class="tablewrap"><h2>Preferred suppliers and minimums</h2><table class="compact"><thead><tr><th>Supplier</th><th>Minimum order value (৳)</th><th>Change minimum</th></tr></thead><tbody>
+        <tr th:each="s : ${suppliers}"><td th:text="${s.name}"></td><td th:text="${#numbers.formatDecimal(s.minOrderValue,1,2)}"></td>
+            <td><form class="inline-form" th:action="@{/consolidation/suppliers/{id}(id=${s.id})}" method="post">
+                <input name="minOrderValue" type="number" min="0" step="0.01" th:value="${s.minOrderValue}" required><button class="small-button" type="submit">Save</button></form></td></tr>
+    </tbody></table></section>
+    <section class="tablewrap"><h2>Ungrouped reorder suggestions</h2>
+        <table class="compact"><thead><tr><th>Supplier</th><th>Products</th><th>Estimated order value (৳)</th><th>Next action</th></tr></thead><tbody>
+        <tr th:each="g : ${groups}"><td th:text="${g.supplier.name}"></td><td th:text="${#lists.size(g.suggestions)}"></td>
+            <td th:text="${#numbers.formatDecimal(g.estimatedValue,1,2)}"></td><td><form th:action="@{/consolidation/drafts}" method="post"><input type="hidden" name="supplierId" th:value="${g.supplier.id}"><button class="small-button" type="submit">Create combined draft</button></form></td></tr>
+        <tr th:if="${#lists.isEmpty(groups)}"><td colspan="4">No ungrouped F3 suggestions available. Visit <a th:href="@{/reorder-points}">F3</a> to review reorder suggestions.</td></tr>
+        </tbody></table>
+    </section>
+    <section class="tablewrap"><h2>Consolidated purchase orders</h2><table class="compact"><thead><tr><th>ID</th><th>Supplier</th><th>Status</th><th>Created</th><th>Details</th></tr></thead><tbody>
+        <tr th:each="o : ${orders}"><td th:text="${o.id}"></td><td th:text="${o.supplier.name}"></td><td th:text="${o.status}"></td><td th:text="${o.createdAt}"></td><td><a th:href="@{/consolidation(id=${o.id})}">View / edit</a></td></tr>
+        </tbody></table></section>
+    <section class="panel" th:if="${chosenOrder != null}">
+        <h2 th:text="'Order #' + ${chosenOrder.id} + ' — ' + ${chosenOrder.supplier.name}"></h2>
+        <p th:text="'Status: ' + ${chosenOrder.status} + ' · Supplier minimum: ৳' + ${chosenOrder.supplier.minOrderValue}"></p>
+        <table class="compact"><thead><tr><th>Source suggestion</th><th>Product</th><th>Quantity / minimum</th><th>Unit cost (৳)</th><th>Line total (৳)</th><th>Edit</th></tr></thead><tbody>
+            <tr th:each="l : ${chosenLines}"><td th:text="${l.suggestion.id}"></td><td th:text="${l.product.name}"></td><td th:text="${l.quantity} + ' / ' + ${l.product.minOrderQty}"></td>
+                <td th:text="${l.product.unitCost}"></td><td th:text="${#numbers.formatDecimal(l.lineValue,1,2)}"></td>
+                <td><form th:if="${chosenOrder.status.name() == 'DRAFT'}" class="inline-form" th:action="@{/consolidation/lines/{id}(id=${l.id})}" method="post">
+                    <input type="hidden" name="orderId" th:value="${chosenOrder.id}"><input name="quantity" type="number" th:min="${l.product.minOrderQty}" th:value="${l.quantity}" required><button type="submit" class="small-button">Update</button></form></td></tr>
+        </tbody></table>
+        <form th:if="${chosenOrder.status.name() == 'DRAFT'}" th:action="@{/consolidation/{id}/confirm(id=${chosenOrder.id})}" method="post">
+            <button type="submit">Confirm supplier purchase order</button>
+            <p class="help">This creates the team's existing per-product F3/F6 purchase orders, so deliveries continue through the original receiving workflow.</p>
+        </form>
+    </section>
+</main></body></html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Batch inventory')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+<main class="container wide">
+    <p class="eyebrow">WAREHOUSE FOUNDATION</p>
+    <h1>Batch inventory</h1>
+    <p class="muted">Receive tracked batches before testing F14 recalls and F15 cold-chain reviews. Existing product stock stays available as unbatched stock.</p>
+    <div th:replace="~{fragments :: messages}"></div>
+    <section class="panel">
+        <h2>Receive a new batch</h2>
+        <form th:action="@{/batches}" method="post">
+            <div class="form-grid">
+                <div><label>Product</label><select name="productId" required><option th:each="p : ${products}" th:value="${p.id}" th:text="${p.name} + ' (' + ${p.sku} + ')'"></option></select></div>
+                <div><label>Batch number</label><input name="batchNumber" required maxlength="80" placeholder="LOT-001"></div>
+                <div><label>Bin code</label><input name="binCode" required maxlength="80" placeholder="COLD-A1"></div>
+                <div><label>Expiry date</label><input name="expiryDate" type="date" required></div>
+                <div><label>Units received</label><input name="quantity" type="number" min="1" required></div>
+            </div>
+            <button type="submit">Receive batch</button>
+        </form>
+    </section>
+    <section class="tablewrap">
+        <h2>Tracked lots</h2>
+        <table class="compact"><thead><tr><th>Batch</th><th>Product</th><th>Bin</th><th>Expiry</th><th class="num">Units</th><th>Quality status</th></tr></thead>
+        <tbody><tr th:each="b : ${batches}">
+            <td th:text="${b.batchNumber}"></td><td th:text="${b.product.name}"></td><td th:text="${b.binCode}"></td>
+            <td th:text="${b.expiryDate}"></td><td class="num" th:text="${b.quantity}"></td>
+            <td><span class="badge" th:classappend="${b.held} ? ' danger' : ' ok'" th:text="${b.held} ? 'HELD' : 'AVAILABLE'"></span><span class="small" th:text="${b.holdReason}"></span></td>
+        </tr><tr th:if="${#lists.isEmpty(batches)}"><td colspan="6">No tracked batches yet. Receive one above.</td></tr></tbody></table>
+    </section>
+</main>
+</body>
+</html>
