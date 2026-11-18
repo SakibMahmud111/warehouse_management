@@ -12,7 +12,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
- * Builds realistic sample data so F1-F4 can be demonstrated right after the first start.
+ * Builds realistic sample data so F1 and F2 can be demonstrated right after the first start.
  *
  * The story behind the numbers (Dhaka-like climate):
  *  - Eight winters ago a winter had about 64 cold days (about 2 months).
@@ -20,9 +20,7 @@ import java.util.TreeMap;
  *  - This October was unusually warm (28.2 °C), so this winter is expected to be short again (about 3 weeks).
  * Winter products (blanket, jacket, shawl) sell much more on cold days; groceries sell steadily,
  * with a jump in Eid shopping weeks.
- * F6: each product has a supplier and 8 past deliveries (Rahman Textiles has been getting slower;
- * CleanCare's deliveries are erratic). F20: two unusual sales weeks are hidden in the history
- * (soap sold almost double 5 weeks ago; oil sold about a third 7 weeks ago).
+ * Each product has a supplier lead time and how much it varies, which F2 uses.
  *
  * Everything is calculated relative to "today", so the demo works on any date.
  * The numbers are fixed by a seed, so every run produces the same data for the same date.
@@ -57,22 +55,13 @@ public final class DemoDataGenerator {
         public final int stockOnHand;
         public final double leadTimeDays;
         public final double leadTimeStdDays;
-        public final int minOrderQuantity;
-        public final int currentOrderQuantity;
         final double baseWeekly;
         final double extraPerColdDay;
         final double eventUplift;
-        /** F6: supplier name and past lead times in days, oldest first. */
-        public String supplierName;
-        int[] pastLeadDays = new int[0];
-        /** F20: one unusual week (weeks ago, sales multiplied by factor); 0 = none. */
-        int anomalyWeeksAgo;
-        double anomalyFactor = 1;
 
         DemoProduct(String sku, String name, String category, boolean seasonal, double unitCost, double sellingPrice,
                     double clearancePrice, int stockOnHand, double leadTimeDays, double leadTimeStdDays,
-                    int minOrderQuantity, int currentOrderQuantity, double baseWeekly, double extraPerColdDay,
-                    double eventUplift) {
+                    double baseWeekly, double extraPerColdDay, double eventUplift) {
             this.sku = sku;
             this.name = name;
             this.category = category;
@@ -83,43 +72,21 @@ public final class DemoDataGenerator {
             this.stockOnHand = stockOnHand;
             this.leadTimeDays = leadTimeDays;
             this.leadTimeStdDays = leadTimeStdDays;
-            this.minOrderQuantity = minOrderQuantity;
-            this.currentOrderQuantity = currentOrderQuantity;
             this.baseWeekly = baseWeekly;
             this.extraPerColdDay = extraPerColdDay;
             this.eventUplift = eventUplift;
-        }
-
-        DemoProduct supplier(String name, int... leadDays) {
-            this.supplierName = name;
-            this.pastLeadDays = leadDays;
-            return this;
-        }
-
-        DemoProduct unusualWeek(int weeksAgo, double factor) {
-            this.anomalyWeeksAgo = weeksAgo;
-            this.anomalyFactor = factor;
-            return this;
         }
     }
 
     public static List<DemoProduct> products() {
         List<DemoProduct> list = new ArrayList<>();
-        //                    sku          name                       category        winter cost  price  clear  stock LT  LTsd MOQ  order base extra/cold eid
-        list.add(new DemoProduct("WM-BLK-01", "Fleece Blanket (Double)", "Winter wear", true, 850, 1250, 550, 40, 12, 3, 50, 0, 4, 9, 1.0)
-                .supplier("Rahman Textiles", 10, 11, 10, 12, 13, 14, 15, 16));
-        list.add(new DemoProduct("WM-JKT-02", "Men's Winter Jacket", "Winter wear", true, 1400, 2200, 900, 15, 15, 4, 20, 0, 1, 4, 1.0)
-                .supplier("Dhaka Outerwear Ltd", 15, 14, 16, 15, 15, 17, 14, 16));
-        list.add(new DemoProduct("WM-SHL-03", "Woolen Shawl", "Winter wear", true, 450, 750, 300, 25, 10, 2, 30, 0, 2, 6, 1.0)
-                .supplier("Rahman Textiles", 9, 10, 9, 11, 12, 13, 14, 15));
-        list.add(new DemoProduct("WM-RCE-04", "Miniket Rice 25 kg", "Grocery", false, 1650, 1850, 1650, 260, 5, 1, 50, 300, 120, 0, 1.35)
-                .supplier("Bengal Agro Foods", 5, 6, 5, 5, 7, 5, 6, 5));
-        list.add(new DemoProduct("WM-OIL-05", "Soybean Oil 5 L", "Grocery", false, 820, 920, 820, 95, 7, 2, 40, 200, 85, 0, 1.5)
-                .supplier("Bengal Agro Foods", 7, 6, 8, 7, 9, 7, 8, 7)
-                .unusualWeek(7, 0.3));
-        list.add(new DemoProduct("WM-SOP-06", "Bath Soap (Pack of 4)", "Personal care", false, 140, 190, 140, 200, 6, 1.5, 100, 400, 210, 0, 1.2)
-                .supplier("CleanCare Distributors", 4, 9, 5, 10, 6, 4, 11, 7)
-                .unusualWeek(5, 1.9));
+        //                    sku          name                       category        winter cost  price  clear  stock LT  LTsd base extra/cold eid
+        list.add(new DemoProduct("WM-BLK-01", "Fleece Blanket (Double)", "Winter wear", true, 850, 1250, 550, 40, 12, 3, 4, 9, 1.0));
+        list.add(new DemoProduct("WM-JKT-02", "Men's Winter Jacket", "Winter wear", true, 1400, 2200, 900, 15, 15, 4, 1, 4, 1.0));
+        list.add(new DemoProduct("WM-SHL-03", "Woolen Shawl", "Winter wear", true, 450, 750, 300, 25, 10, 2, 2, 6, 1.0));
+        list.add(new DemoProduct("WM-RCE-04", "Miniket Rice 25 kg", "Grocery", false, 1650, 1850, 1650, 260, 5, 1, 120, 0, 1.35));
+        list.add(new DemoProduct("WM-OIL-05", "Soybean Oil 5 L", "Grocery", false, 820, 920, 820, 95, 7, 2, 85, 0, 1.5));
+        list.add(new DemoProduct("WM-SOP-06", "Bath Soap (Pack of 4)", "Personal care", false, 140, 190, 140, 200, 6, 1.5, 210, 0, 1.2));
         return list;
     }
 
@@ -256,38 +223,8 @@ public final class DemoDataGenerator {
                 expected *= product.eventUplift;
             }
             double noisy = expected * (1 + 0.10 * random.nextGaussian()) + random.nextGaussian();
-            if (i == product.anomalyWeeksAgo) {
-                noisy *= product.anomalyFactor;   // F20 demo: an unusual week
-            }
             result.add(new WeekSales(monday, Math.max(0, Math.round(noisy)), event));
         }
         return result;
-    }
-
-    // ---------------------------------------------------------------- deliveries (F6)
-
-    /** A past purchase order and when it arrived. */
-    public static final class DemoDelivery {
-        public final LocalDate orderDate;
-        public final LocalDate receivedDate;
-        public final int quantity;
-
-        DemoDelivery(LocalDate orderDate, LocalDate receivedDate, int quantity) {
-            this.orderDate = orderDate;
-            this.receivedDate = receivedDate;
-            this.quantity = quantity;
-        }
-    }
-
-    /** One past delivery every 6 weeks; the newest was ordered 3 weeks ago. Oldest first. */
-    public static List<DemoDelivery> deliveries(DemoProduct product, LocalDate today) {
-        List<DemoDelivery> list = new ArrayList<>();
-        int count = product.pastLeadDays.length;
-        int quantity = product.currentOrderQuantity > 0 ? product.currentOrderQuantity : product.minOrderQuantity * 2;
-        for (int i = 0; i < count; i++) {
-            LocalDate ordered = today.minusDays(21 + 42L * (count - 1 - i));
-            list.add(new DemoDelivery(ordered, ordered.plusDays(product.pastLeadDays[i]), quantity));
-        }
-        return list;
     }
 }

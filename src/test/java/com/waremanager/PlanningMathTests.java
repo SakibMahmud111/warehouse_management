@@ -1,13 +1,9 @@
 package com.waremanager;
 
-import com.waremanager.service.AnomalyService;
 import com.waremanager.service.DemandForecaster;
 import com.waremanager.service.DemandModel;
 import com.waremanager.service.DemoDataGenerator;
 import com.waremanager.service.InventoryMath;
-import com.waremanager.service.LeadTimeEstimate;
-import com.waremanager.service.LeadTimePredictor;
-import com.waremanager.service.SeasonPlan;
 import com.waremanager.service.Statistics;
 import com.waremanager.service.WeekForecast;
 import com.waremanager.service.WeekSales;
@@ -53,20 +49,7 @@ class PlanningMathTests {
         assertEquals(11, line.predict(5), 1e-9);
     }
 
-    // ---------------------------------------------------------------- InventoryMath
-
-    @Test
-    void eoqTextbookExample() {
-        // D = 1000/yr, S = 50, H = 2  ->  sqrt(2 * 1000 * 50 / 2) = sqrt(50000) = 223.6
-        assertEquals(223.6, InventoryMath.eoq(1000, 50, 2), 0.1);
-        assertEquals(224, InventoryMath.roundUpToMinimum(223.6, 100));
-        assertEquals(250, InventoryMath.roundUpToMinimum(223.6, 250));   // supplier minimum wins
-        assertEquals(0, InventoryMath.roundUpToMinimum(0, 50));          // nothing needed, nothing ordered
-        // At EOQ, ordering cost = holding cost
-        double q = InventoryMath.eoq(1000, 50, 2);
-        assertEquals(447.2, InventoryMath.annualCost(1000, 50, 2, q), 0.1);
-        assertTrue(InventoryMath.annualCost(1000, 50, 2, 100) > InventoryMath.annualCost(1000, 50, 2, q));
-    }
+    // ---------------------------------------------------------------- F2 InventoryMath
 
     @Test
     void safetyStockFormula() {
@@ -80,14 +63,6 @@ class PlanningMathTests {
         assertEquals(400.0 / 700.0, InventoryMath.criticalRatio(1250, 850, 550), 1e-9);
         assertEquals(0.99, InventoryMath.criticalRatio(100, 80, 80), 1e-9);  // leftovers lose nothing
         assertEquals(0.01, InventoryMath.criticalRatio(80, 100, 50), 1e-9);  // sold at a loss
-    }
-
-    @Test
-    void overstockingLosesMoney() {
-        InventoryMath.SeasonOutcome right = InventoryMath.expectedOutcome(110, 100, 10, 1250, 850, 550);
-        InventoryMath.SeasonOutcome tooMuch = InventoryMath.expectedOutcome(300, 100, 10, 1250, 850, 550);
-        assertTrue(right.getExpectedProfit() > tooMuch.getExpectedProfit());
-        assertEquals(200, tooMuch.getExpectedLeftover(), 1);
     }
 
     // ---------------------------------------------------------------- F1 winter prediction
@@ -172,93 +147,6 @@ class PlanningMathTests {
         List<WeekForecast> steady = List.of(new WeekForecast(LocalDate.of(2026, 11, 9), 0, false, 70),
                 new WeekForecast(LocalDate.of(2026, 11, 16), 0, false, 70));
         assertEquals(70, DemandForecaster.demandOverDays(steady, LocalDate.of(2026, 11, 10), 7), 1e-9);
-    }
-
-    // ---------------------------------------------------------------- F4 winter plan
-
-    @Test
-    void winterPlanBeatsStockingForTwoMonths() {
-        LocalDate today = NOV_14_2026;
-        WinterOutlook outlook = WinterForecaster.predict(DemoDataGenerator.temperatures(today), today, 20.0);
-        DemandModel blanket = modelFor("WM-BLK-01", today);
-        SeasonPlan plan = SeasonPlan.create(1250, 850, 550, 40, 50, 12, blanket, outlook, today, 60);
-
-        assertTrue(plan.getOrderQuantity() > 0);
-        assertTrue(plan.getTargetStock() < plan.getDefaultStock(), "a short winter needs less than 60 days of stock");
-        assertTrue(plan.getUsualPlan().getExpectedLeftover() > 5 * plan.getRecommended().getExpectedLeftover());
-        assertTrue(plan.getExtraProfit() > 0);
-        assertTrue(plan.getOrderByDate().isBefore(outlook.getExpectedStart()));
-    }
-
-    @Test
-    void noWinterStockIsBoughtAfterWinterEnds() {
-        LocalDate feb20 = LocalDate.of(2027, 2, 20);
-        WinterOutlook outlook = WinterForecaster.predict(DemoDataGenerator.temperatures(feb20), feb20, 20.0);
-        SeasonPlan plan = SeasonPlan.create(1250, 850, 550, 40, 50, 12, modelFor("WM-BLK-01", feb20), outlook, feb20, 60);
-        assertEquals(0, plan.getOrderQuantity());
-        assertNull(plan.getOrderByDate());
-    }
-
-    // ---------------------------------------------------------------- F6 lead time
-
-    @Test
-    void leadTimeUsesManualValueUntilThreeDeliveries() {
-        LeadTimeEstimate estimate = LeadTimePredictor.estimate(List.of(9, 11), 7, 2);
-        assertFalse(estimate.isFromDeliveries());
-        assertEquals(7, estimate.getPredictedDays(), 1e-9);
-        assertEquals(2, estimate.getStdDays(), 1e-9);
-    }
-
-    @Test
-    void leadTimeFollowsASupplierThatIsGettingSlower() {
-        // 10 days for a long time, then 16, 16, 16: the prediction moves well above the plain average
-        LeadTimeEstimate estimate = LeadTimePredictor.estimate(List.of(10, 10, 10, 10, 16, 16, 16), 7, 2);
-        assertTrue(estimate.isFromDeliveries());
-        double plainAverage = (10 * 4 + 16 * 3) / 7.0;
-        assertTrue(estimate.getPredictedDays() > plainAverage, "recent deliveries should count more");
-        assertTrue(estimate.getTrendPerDelivery() > 0);
-        assertTrue(estimate.getLowDays() >= 1);
-        // steady supplier: prediction equals the constant lead time
-        assertEquals(5, LeadTimePredictor.estimate(List.of(5, 5, 5, 5), 9, 3).getPredictedDays(), 1e-9);
-    }
-
-    // ---------------------------------------------------------------- F7 stockout risk
-
-    @Test
-    void stockoutProbabilityFollowsTheBellCurve() {
-        assertEquals(0.5, InventoryMath.stockoutProbability(100, 100, 20), 1e-6);       // stock = expected demand
-        assertEquals(0.05, InventoryMath.stockoutProbability(132.9, 100, 20), 1e-3);     // 1.645 sd of buffer
-        assertTrue(InventoryMath.stockoutProbability(0, 50, 10) > 0.99);                // nothing on hand
-        assertEquals(0, InventoryMath.stockoutProbability(10, 0, 0), 1e-9);             // no demand, no risk
-    }
-
-    // ---------------------------------------------------------------- F20 anomaly rule
-
-    @Test
-    void anomalyNeedsBothPercentAndUnits() {
-        assertTrue(AnomalyService.isAnomaly(444, 239, 50));      // +86%, 205 units
-        assertTrue(AnomalyService.isAnomaly(29, 81, 50));        // -64%, 52 units
-        assertFalse(AnomalyService.isAnomaly(260, 239, 50));     // +9%: normal noise
-        assertFalse(AnomalyService.isAnomaly(4, 2, 50));         // +100% but only 2 units
-        assertEquals(-64.2, AnomalyService.deviationPercent(29, 81), 0.1);
-    }
-
-    @Test
-    void demoDataHidesExactlyTwoUnusualWeeks() {
-        LocalDate today = NOV_14_2026;
-        SortedMap<LocalDate, Double> temperatures = DemoDataGenerator.temperatures(today);
-        WinterOutlook outlook = WinterForecaster.predict(temperatures, today, 20.0);
-        int found = 0;
-        for (DemoDataGenerator.DemoProduct product : DemoDataGenerator.products()) {
-            List<WeekSales> sales = DemoDataGenerator.weeklySales(product, temperatures, 20.0, DemoDataGenerator.events(), today);
-            DemandModel model = DemandForecaster.fit(sales, product.seasonal, outlook);
-            for (WeekSales week : sales.subList(sales.size() - 12, sales.size())) {
-                if (AnomalyService.isAnomaly(week.getQuantity(), model.getFitted().get(week.getWeekStart()), 50)) {
-                    found++;
-                }
-            }
-        }
-        assertEquals(2, found);
     }
 
     private static DemandModel modelFor(String sku, LocalDate today) {
