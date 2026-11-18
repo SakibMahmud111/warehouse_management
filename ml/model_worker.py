@@ -50,10 +50,12 @@ except ImportError as error:
 
 NEWEST_WEIGHT = 0.3  # F6: each new delivery counts 30% of the prediction
 
+
 def round_to(value, factor):
     """Rounds exactly like the Java backup (Math.floor(value * factor + 0.5) / factor),
     so Python and Java give identical numbers. factor 100 = 2 decimals, 1e6 = 6 decimals."""
     return math.floor(value * factor + 0.5) / factor
+
 
 def fit_line(x, y):
     """F1: trains the straight line y = intercept + slope * x (least squares) with scikit-learn."""
@@ -79,6 +81,7 @@ def fit_line(x, y):
             "r2": round_to(r2, 1e6),
             "residual_std": round_to(residual_std, 1e6),
             "points": n}
+
 
 def lead_time(days):
     """F6: predicts the next lead time from past lead times (oldest delivery first)."""
@@ -109,6 +112,7 @@ def lead_time(days):
             "spread_days": round_to(spread, 100),
             "trend_per_delivery": trend}
 
+
 def stockout_risk(stock, demand, horizon_days, daily_error_std, lead_time_std_days):
     """F7: chance that demand before the next delivery is larger than the stock on hand.
 
@@ -125,6 +129,7 @@ def stockout_risk(stock, demand, horizon_days, daily_error_std, lead_time_std_da
         probability = float(norm.sf((stock - demand) / std))  # P(demand > stock) from the bell curve
     return {"probability": probability, "demand_std": std}
 
+
 def anomalies(actual, expected, threshold_percent, min_units):
     """F20: compares each week's actual sales with what the F1 model expected for that week.
     A week is unusual when it is at least threshold_percent and at least min_units away."""
@@ -136,6 +141,7 @@ def anomalies(actual, expected, threshold_percent, min_units):
     deviation = np.where(usable, (actual - expected) / safe_expected * 100, 0.0)  # +85 = 85% above
     unusual = usable & (difference >= min_units) & (difference / safe_expected * 100 >= threshold_percent)
     return {"unusual": [bool(v) for v in unusual], "deviation_percent": [float(v) for v in deviation]}
+
 
 def answer(request):
     task = request.get("task")
@@ -149,6 +155,7 @@ def answer(request):
     if task == "anomalies":
         return anomalies(request["actual"], request["expected"], request["threshold_percent"], request["min_units"])
     raise ValueError("unknown task: %s" % task)
+
 
 def main():
     # First line: tell the Java app we are ready and which versions are used (shown on the F1, F6, F7 and F20 pages).
@@ -164,6 +171,7 @@ def main():
         except Exception as error:  # a bad request must not stop the worker
             result = {"ok": False, "error": str(error)}
         print(json.dumps(result), flush=True)
+
 
 if __name__ == "__main__":
     main()
