@@ -2,12 +2,12 @@ services:
   postgres:
     image: postgres:17
     environment:
-      POSTGRES_DB: waremanager
+      POSTGRES_DB: waremanager_f12
       POSTGRES_USER: waremanager
       POSTGRES_PASSWORD: waremanager
     ports:
       - "5432:5432"
     volumes:
-      - waremanager_db:/var/lib/postgresql/data
+      - waremanager_f12_db:/var/lib/postgresql/data
 volumes:
-  waremanager_db:
+  waremanager_f12_db:

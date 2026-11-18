@@ -12,16 +12,13 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Runs the planning features for every product, in this order, because each step uses the ones before:
+ * Runs the planning features for every product, in this order, because F2 uses F1's results:
  *
- *   F6 lead time  ->  F1 forecast  ->  F2 safety stock (forecast error + F6 lead time)
- *                                  ->  F4 order quantity (forecast; winter plan uses the F6 lead time)
- *                                  ->  F3 reorder point and suggestions (F2 safety stock, F4 quantity)
- *                                  ->  F7 stockout risk and alerts (forecast, F6 lead time, F3 suggestion)
- *                                  ->  F20 demand anomalies (F1 model vs actual sales)
+ *   F1 forecast (winter prediction, weekly sales model, 12 weeks of forecasts)
+ *     ->  F2 safety stock (forecast demand and error + the product's supplier lead time)
  *
- * It runs at startup and after every change (new sales, temperature, settings, product edits, overrides,
- * suggestion actions), so all four pages always show numbers that agree with each other.
+ * It runs at startup and after every change (new sales, temperatures, events, settings, product edits,
+ * overrides), so both pages always show numbers that agree with each other.
  */
 @Service
 public class PlanningService {
@@ -32,28 +29,16 @@ public class PlanningService {
     private final WinterService winterService;
     private final ForecastService forecastService;
     private final SafetyStockService safetyStockService;
-    private final OrderQuantityService orderQuantityService;
-    private final ReorderPointService reorderPointService;
-    private final LeadTimeService leadTimeService;
-    private final RiskService riskService;
-    private final AnomalyService anomalyService;
 
     public PlanningService(ProductRepository products, InventoryPolicyRepository policies,
                            SettingsService settingsService, WinterService winterService,
-                           ForecastService forecastService, SafetyStockService safetyStockService,
-                           OrderQuantityService orderQuantityService, ReorderPointService reorderPointService,
-                           LeadTimeService leadTimeService, RiskService riskService, AnomalyService anomalyService) {
+                           ForecastService forecastService, SafetyStockService safetyStockService) {
         this.products = products;
         this.policies = policies;
         this.settingsService = settingsService;
         this.winterService = winterService;
         this.forecastService = forecastService;
         this.safetyStockService = safetyStockService;
-        this.orderQuantityService = orderQuantityService;
-        this.reorderPointService = reorderPointService;
-        this.leadTimeService = leadTimeService;
-        this.riskService = riskService;
-        this.anomalyService = anomalyService;
     }
 
     /** Recalculates every product. Returns how many products were planned. */
@@ -67,11 +52,9 @@ public class PlanningService {
         for (Product product : all) {
             InventoryPolicy policy = policies.findByProduct(product).orElseGet(() -> new InventoryPolicy(product));
 
-            // F6: lead time learned from deliveries (or the product's manual value)
-            LeadTimeEstimate leadTime = leadTimeService.estimate(product);
-            policy.setLeadTimeDays(leadTime.getPredictedDays());
-            policy.setLeadTimeStdDays(leadTime.getStdDays());
-            policy.setLeadTimeSource(leadTime.getSourceLabel());
+            // Supplier lead time and its variation, as entered on the product
+            policy.setLeadTimeDays(product.getLeadTimeDays());
+            policy.setLeadTimeStdDays(product.getLeadTimeStdDays());
 
             // F1: learn the model and save 12 weeks of forecasts
             DemandModel model = forecastService.learnModel(product, outlook);
@@ -83,19 +66,7 @@ public class PlanningService {
             // F2: safety stock
             safetyStockService.calculate(policy, product, model, forecasts, settings, today);
 
-            // F4: order quantity (EOQ, or the winter plan for winter products)
-            orderQuantityService.calculate(policy, product, model, forecasts, outlook, settings, today);
-
             policies.save(policy);
-
-            // F3: reorder point, suggestion and history
-            reorderPointService.calculate(policy, product, today);
-
-            // F7: chance of running out before the next delivery, and its alert
-            riskService.calculate(policy, product, model, forecasts, settings, today);
-
-            // F20: unusual sales weeks
-            anomalyService.detect(product, model, settings, today);
         }
         return all.size();
     }
@@ -108,18 +79,20 @@ public class PlanningService {
 
     @Transactional
     public DashboardSummary dashboard() {
-        PlanningSettings settings = settingsService.get();
-        LocalDate today = LocalDate.now();
-        WinterOutlook outlook = winterService.outlook(settings.getColdDayThreshold(), today);
-        double extraProfit = 0;
-        double orderCost = 0;
-        for (SeasonRow row : orderQuantityService.seasonRows(outlook, settings, today)) {
-            extraProfit += row.getPlan().getExtraProfit();
-            orderCost += row.getPlan().getOrderCost();
+        WinterOutlook outlook = currentOutlook();
+        long totalSafetyStock = 0;
+        long belowSafetyStock = 0;
+        long overrides = 0;
+        for (InventoryPolicy policy : policies.findAll()) {
+            totalSafetyStock += policy.getEffectiveSafetyStock();
+            if (policy.getProduct().getQuantity() < policy.getEffectiveSafetyStock()) {
+                belowSafetyStock++;
+            }
+            if (policy.isOverridden()) {
+                overrides++;
+            }
         }
-        return new DashboardSummary(products.count(), outlook, reorderPointService.openSuggestionCount(),
-                policies.countByBelowReorderPointTrue(), extraProfit, orderCost,
-                riskService.activeAlertCount(), anomalyService.activeCount(), leadTimeService.openOrders().size());
+        return new DashboardSummary(products.count(), outlook, totalSafetyStock, belowSafetyStock, overrides);
     }
 
     private static double average(List<WeekForecast> forecasts) {

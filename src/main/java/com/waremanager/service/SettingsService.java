@@ -24,12 +24,7 @@ public class SettingsService {
     @Transactional
     public void update(PlanningSettings form) {
         PlanningSettings settings = get();
-        settings.setOrderingCost(form.getOrderingCost());
-        settings.setHoldingRatePercent(form.getHoldingRatePercent());
         settings.setServiceLevelPercent(form.getServiceLevelPercent());
         settings.setColdDayThreshold(form.getColdDayThreshold());
-        settings.setDefaultStockDays(form.getDefaultStockDays());
-        settings.setStockoutAlertPercent(form.getStockoutAlertPercent());
-        settings.setAnomalyThresholdPercent(form.getAnomalyThresholdPercent());
     }
 }

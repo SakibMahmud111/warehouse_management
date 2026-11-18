@@ -7,7 +7,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-/** Recalculates F1-F4 on every startup, so forecasts always start from today's date. */
+/** Recalculates F1 and F2 on every startup, so forecasts always start from today's date. */
 @Component
 @Order(3)
 public class PlanningInitializer implements CommandLineRunner {
@@ -23,6 +23,6 @@ public class PlanningInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         int count = planning.recalculateAll();
-        log.info("Planning run finished for {} products (F1 forecast, F2 safety stock, F4 order quantity, F3 reorder points).", count);
+        log.info("Planning run finished for {} products (F1 forecast, F2 safety stock).", count);
     }
 }

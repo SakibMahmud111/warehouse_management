@@ -13,7 +13,7 @@
     <section class="panel small">
         <p><span class="formula">safety stock = z × √(LT × σd² + d² × σLT²)</span></p>
         <p class="muted">d = forecast units per day during the lead time (F1) · σd = forecast error per day (F1) ·
-            LT = supplier lead time in days and σLT = how much it varies (<a th:href="@{/lead-times}">F6</a>) · z = from the service level.</p>
+            LT = supplier lead time in days and σLT = how much it varies (set on each <a th:href="@{/products}">product</a>) · z = from the service level.</p>
         <p class="muted">Steady products use the service level from <a th:href="@{/settings}">Settings</a>
             (<span th:text="${settings.serviceLevelPercent}">95</span>%).
             Winter products use the <strong>most profitable</strong> service level, because unsold winter stock must be cleared cheaply:
@@ -33,6 +33,7 @@
                 <th class="num">Calculated</th>
                 <th>Manual override</th>
                 <th class="num">Used</th>
+                <th class="num">On hand</th>
             </tr>
             </thead>
             <tbody>
@@ -44,7 +45,6 @@
                 <td class="num" th:text="${#numbers.formatDecimal(p.forecastErrorStd, 1, 1)}">0</td>
                 <td class="num">
                     <span th:text="${#numbers.formatDecimal(p.leadTimeDays, 1, 1)} + ' ± ' + ${#numbers.formatDecimal(p.leadTimeStdDays, 1, 1)} + ' d'">7 ± 2 d</span>
-                    <br><span class="small muted" th:text="${p.leadTimeSource}">source</span>
                 </td>
                 <td class="num" th:text="${#numbers.formatDecimal(p.leadTimeDemand, 1, 1)}">0</td>
                 <td class="num">
@@ -69,12 +69,14 @@
                     </form>
                 </td>
                 <td class="num"><strong th:text="${p.effectiveSafetyStock}">0</strong></td>
+                <td class="num" th:classappend="${p.product.quantity < p.effectiveSafetyStock} ? 'bad'" th:text="${p.product.quantity}">0</td>
             </tr>
-            <tr th:if="${#lists.isEmpty(policies)}"><td colspan="9">No planning data yet. Add products and sales history.</td></tr>
+            <tr th:if="${#lists.isEmpty(policies)}"><td colspan="10">No planning data yet. Add products and sales history.</td></tr>
             </tbody>
         </table>
     </div>
-    <p class="muted small">The safety stock in the "Used" column goes into the reorder point (<a th:href="@{/reorder-points}">F3</a>).</p>
+    <p class="muted small">"Used" is the safety stock in force: your override if you set one, otherwise the calculated value.
+        Stock on hand below it is shown in red.</p>
 </main>
 </body>
 </html>
