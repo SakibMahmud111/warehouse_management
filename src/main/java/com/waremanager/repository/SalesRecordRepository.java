@@ -12,6 +12,6 @@ public interface SalesRecordRepository extends JpaRepository<SalesRecord, Long> 
 
     /** Oldest week first: SELECT ... WHERE product_id = ? ORDER BY week_start ASC */
     List<SalesRecord> findByProductOrderByWeekStartAsc(Product product);
-
+        List<SalesRecord> findByProductOrderByWeekStartDesc(Product product); //f5
     Optional<SalesRecord> findByProductAndWeekStart(Product product, LocalDate weekStart);
 }

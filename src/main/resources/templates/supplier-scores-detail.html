@@ -1,14 +1,13 @@
-<!--F5-->
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('F5 · ' + ${supplier.name})}"></head>
+<head th:replace="~{fragments :: head(${supplier.name})}"></head>
 <body>
 <header th:replace="~{fragments :: topbar}"></header>
 <main class="container wide">
     <div class="heading">
         <div>
             <p class="eyebrow">PURCHASING</p>
-            <h1 th:text="'F5 · ' + ${supplier.name}">Supplier</h1>
+            <h1 th:text="${supplier.name}">Supplier</h1>
         </div>
         <a th:href="@{/supplier-scores}">← Back to supplier scores</a>
     </div>

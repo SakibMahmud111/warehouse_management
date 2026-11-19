@@ -49,6 +49,13 @@
             <strong th:class="${summary.stockoutAlerts > 0} ? 'bad'" th:text="${summary.stockoutAlerts}">0</strong>
             <span class="muted">products likely to run out before their next delivery</span>
         </a>
+
+        <a class="card" th:href="@{/stock-health}">
+            <span class="card-label">Stock health</span>
+            <strong th:class="${stockHealth.problemCount() > 0} ? 'bad'" th:text="${stockHealth.problemCount()}">0</strong>
+            <span class="muted">overstocked or dead products, ৳<span th:text="${#numbers.formatDecimal(stockHealth.valueTiedUp(), 1, 'COMMA', 0, 'POINT')}">0</span> tied up</span>
+        </a>
+        
         <a class="card" th:href="@{/anomalies}">
             <span class="card-label">Demand anomalies</span>
             <strong th:text="${summary.demandAnomalies}">0</strong>

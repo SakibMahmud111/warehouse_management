@@ -6,6 +6,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import com.waremanager.service.SupplierScoreService; //f5
+import com.waremanager.service.StockHealthService; //f8
 
 import java.security.Principal;
 
@@ -15,11 +16,13 @@ public class HomeController {
     private final PlanningService planning;
     private final UserAccountService accounts;
     private final SupplierScoreService supplierScores; //f5
+    private final StockHealthService stockHealthService; //f8
 
-    public HomeController(PlanningService planning, UserAccountService accounts, SupplierScoreService supplierScores) {
+    public HomeController(PlanningService planning, UserAccountService accounts, SupplierScoreService supplierScores, StockHealthService stockHealthService) {
         this.planning = planning;
         this.accounts = accounts;
         this.supplierScores = supplierScores; //f5
+        this.stockHealthService = stockHealthService; //f8
     }
 
     @GetMapping("/")
@@ -34,6 +37,7 @@ public class HomeController {
     public String dashboard(Model model, Principal principal) {
         model.addAttribute("summary", planning.dashboard());
         model.addAttribute("supplierAvg", supplierScores.averageScore());//f5
+        model.addAttribute("stockHealth", stockHealthService.summary());  //f8 
         accounts.findByUsername(principal.getName())
                 .ifPresent(user -> model.addAttribute("currentUser", user));
         return "dashboard";

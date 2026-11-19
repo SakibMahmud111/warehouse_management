@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Stock health')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+<main class="container wide">
+    <div class="heading">
+        <div>
+            <p class="eyebrow">WAREHOUSE</p>
+            <h1>Stock health</h1>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+    <section class="panel">
+        <form method="get" th:action="@{/stock-health}">
+            Dead if no sale for <input type="number" name="deadDays" min="1" th:value="${deadDays}"> days ·
+            Overstock above <input type="number" name="coverDays" min="1" th:value="${coverDays}"> days of cover
+            <button type="submit">Apply</button>
+        </form>
+        <div class="tablewrap">
+            <table class="compact">
+                <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>On hand</th>
+                    <th>Days of cover</th>
+                    <th>Status</th>
+                    <th>Value tied up</th>
+                    <th>Suggested action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${rows}">
+                    <td th:text="${r.product().name}">Name</td>
+                    <td th:text="${r.product().quantity}">0</td>
+                    <td th:text="${r.result().daysOfCover() >= 9999} ? '∞' : ${#numbers.formatDecimal(r.result().daysOfCover(), 1, 0)}">0</td>
+                    <td>
+                        <span th:text="${r.result().status()}"
+                              th:class="${r.result().status().name() == 'DEAD' or r.result().status().name() == 'OVERSTOCK'} ? 'bad'">OK</span>
+                    </td>
+                    <td th:text="'৳' + ${#numbers.formatDecimal(r.result().valueTiedUp(), 1, 'COMMA', 0, 'POINT')}">৳0</td>
+                    <td th:text="${r.result().suggestion()}">-</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+</body>
+</html>
