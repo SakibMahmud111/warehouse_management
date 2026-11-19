@@ -53,24 +53,6 @@
             <span class="muted">orders on their way, with predicted arrival dates</span>
         </a>
     </section>
-
-    <section class="panel">
-        <h2>How the planning features work together</h2>
-        <ol>
-            <li><a th:href="@{/lead-times}"><strong>Lead times</strong></a> learns how many days each supplier takes from past deliveries.</li>
-            <li><a th:href="@{/forecast}"><strong>Demand forecasting</strong></a> predicts this winter's length from temperatures
-                and learns each product's weekly sales (winter products sell more on cold days; Eid weeks get an uplift).</li>
-            <li><a th:href="@{/safety-stock}"><strong>Safety stock</strong></a> uses the forecast error and supplier lead time to size the buffer.</li>
-            <li><a th:href="@{/eoq}"><strong>Order quantity</strong></a> picks the cheapest order size (EOQ) for steady products,
-                and the most profitable winter stock for winter products.</li>
-            <li><a th:href="@{/reorder-points}"><strong>Reorder points</strong></a> = lead-time demand + safety stock, and creates
-                reorder suggestions with the recommended order quantity.</li>
-            <li><a th:href="@{/stockout-risk}"><strong>Stockout risk</strong></a> estimates the chance of running out before the next
-                delivery and links each alert to its reorder suggestion.</li>
-            <li><a th:href="@{/anomalies}"><strong>Demand anomalies</strong></a> flags weeks whose sales were far from the forecast.</li>
-        </ol>
-        <p class="muted small">Everything is recalculated automatically whenever sales, temperatures, products or settings change.</p>
-    </section>
 </main>
 </body>
 </html>

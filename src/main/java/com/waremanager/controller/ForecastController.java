@@ -5,7 +5,6 @@ import com.waremanager.service.ForecastService;
 import com.waremanager.service.PlanningService;
 import com.waremanager.service.ProductForecast;
 import com.waremanager.service.ProductService;
-import com.waremanager.service.PythonModelTrainer;
 import com.waremanager.service.WinterOutlook;
 import com.waremanager.service.WinterService;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -30,15 +29,13 @@ public class ForecastController {
     private final ForecastService forecasts;
     private final WinterService winter;
     private final PlanningService planning;
-    private final PythonModelTrainer models;
 
     public ForecastController(ProductService products, ForecastService forecasts, WinterService winter,
-                              PlanningService planning, PythonModelTrainer models) {
+                              PlanningService planning) {
         this.products = products;
         this.forecasts = forecasts;
         this.winter = winter;
         this.planning = planning;
-        this.models = models;
     }
 
     @GetMapping
@@ -47,8 +44,6 @@ public class ForecastController {
         List<Product> all = products.all();
         model.addAttribute("outlook", outlook);
         model.addAttribute("products", all);
-        model.addAttribute("mlEngine", models.getStatus());
-        model.addAttribute("mlPython", models.isUsingPython());
         model.addAttribute("events", forecasts.allEvents());
         model.addAttribute("recentReadings", winter.recentReadings());
         model.addAttribute("today", LocalDate.now());

@@ -3,7 +3,6 @@ package com.waremanager.controller;
 import com.waremanager.service.LeadTimeService;
 import com.waremanager.service.PlanningService;
 import com.waremanager.service.ProductService;
-import com.waremanager.service.PythonModelTrainer;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,14 +22,11 @@ public class LeadTimeController {
     private final LeadTimeService leadTimes;
     private final ProductService products;
     private final PlanningService planning;
-    private final PythonModelTrainer models;
 
-    public LeadTimeController(LeadTimeService leadTimes, ProductService products, PlanningService planning,
-                              PythonModelTrainer models) {
+    public LeadTimeController(LeadTimeService leadTimes, ProductService products, PlanningService planning) {
         this.leadTimes = leadTimes;
         this.products = products;
         this.planning = planning;
-        this.models = models;
     }
 
     @GetMapping
@@ -40,8 +36,6 @@ public class LeadTimeController {
         model.addAttribute("receipts", leadTimes.recentReceipts());
         model.addAttribute("products", products.all());
         model.addAttribute("today", LocalDate.now());
-        model.addAttribute("mlEngine", models.getStatus());
-        model.addAttribute("mlPython", models.isUsingPython());
         return "lead-times";
     }
 

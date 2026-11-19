@@ -86,7 +86,7 @@ Sign-in follows the same layering: the login form posts to Spring Security, whic
 
 The forecasting and inventory formulas live in plain-Java classes in the service package (`Statistics`, `InventoryMath`, `WinterForecaster`, `DemandForecaster`, `SeasonPlan`, `LeadTimePredictor`). The Spring services load data, call these classes and save the results.
 
-**Prediction models in Python.** Every prediction goes through the `ModelTrainer` interface: F1 regressions (`fitLine`), F6 lead time (`leadTime`), F7 chance of running out (`stockoutRisk`) and F20 unusual weeks (`anomalies`). `PythonModelTrainer` (a Spring service) starts `ml/model_worker.py` once, sends each request as one line of JSON and reads the answer. If Python or a package is missing, or the script stops answering, `JavaModelTrainer` runs the same formulas in Java, so the app always works with the same results (`PythonModelTests` checks this; the only difference is F7's chance, where SciPy's exact bell curve and the Java formula can differ by about 0.0000001). The F1, F6, F7 and F20 pages show which one is in use. F2, F3 and F4 are calculations, not predictions: they use the F1 and F6 predictions as inputs.
+**Prediction models in Python.** Every prediction goes through the `ModelTrainer` interface: F1 regressions (`fitLine`), F6 lead time (`leadTime`), F7 chance of running out (`stockoutRisk`) and F20 unusual weeks (`anomalies`). `PythonModelTrainer` (a Spring service) starts `ml/model_worker.py` once, sends each request as one line of JSON and reads the answer. If Python or a package is missing, or the script stops answering, `JavaModelTrainer` runs the same formulas in Java, so the app always works with the same results (`PythonModelTests` checks this; the only difference is F7's chance, where SciPy's exact bell curve and the Java formula can differ by about 0.0000001). The console shows which one is in use when the app starts. F2, F3 and F4 are calculations, not predictions: they use the F1 and F6 predictions as inputs.
 
 ## Local Setup
 
@@ -110,7 +110,7 @@ The forecasting and inventory formulas live in plain-Java classes in the service
    mvn spring-boot:run
    ```
 
-   The F1, F6, F7 and F20 pages show "… by: Python … with scikit-learn …, SciPy …, NumPy …". If they show "Java backup", the reason is printed next to it (for example Python not found, or scikit-learn not installed); the app still works with the same numbers.
+   When the app starts, the console shows "Prediction models run in Python … with scikit-learn …, SciPy …, NumPy …". If it shows "Java backup" instead, the reason is printed next to it (for example Python not found, or scikit-learn not installed); the app still works with the same numbers.
 
    The first start loads sample data (6 products, 4 suppliers with 8 past deliveries each, 3 years of weekly sales, 8 years of daily temperatures), which takes a few seconds.
 
