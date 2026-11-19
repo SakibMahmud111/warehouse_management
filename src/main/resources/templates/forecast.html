@@ -12,8 +12,6 @@
         </form>
     </div>
     <div th:replace="~{fragments :: messages}"></div>
-    <p class="small">Machine-learning models trained by:
-        <span class="badge" th:classappend="${mlPython} ? 'ok' : 'warn'" th:text="${mlEngine}">Python with scikit-learn</span></p>
 
     <!-- ===================== Winter outlook ===================== -->
     <section class="panel">
@@ -23,7 +21,6 @@
         </div>
         <div class="split" th:if="${outlook.hasHistory()}">
             <div>
-                <p class="muted small">Predicted cold days this winter (daily average ≤ <span th:text="${outlook.coldThreshold}">20</span> °C)</p>
                 <div class="big"><span th:text="${outlook.predictedDays}">0</span> days</div>
                 <p>
                     Likely range <strong th:text="${outlook.lowDays} + '–' + ${outlook.highDays}">0–0</strong> days.
@@ -43,15 +40,6 @@
                     <strong th:text="${#temporals.format(outlook.expectedStart, 'd MMM yyyy')}">date</strong> to
                     <strong th:text="${#temporals.format(outlook.expectedEnd, 'd MMM yyyy')}">date</strong>.
                 </p>
-                <p class="small muted">
-                    <strong>Model:</strong> <span th:text="${outlook.method}">method</span>
-                    <span th:if="${outlook.getRSquared() > 0}"> · R² = <span th:text="${#numbers.formatDecimal(outlook.getRSquared(), 1, 2)}">0</span></span>
-                    <span th:if="${outlook.octoberAverage != null}"> · this October averaged
-                        <span th:text="${#numbers.formatDecimal(outlook.octoberAverage, 1, 1)}">0</span> °C</span>
-                    <span th:if="${outlook.lastReadingDate != null}"> · last reading
-                        <span th:text="${#temporals.format(outlook.lastReadingDate, 'd MMM yyyy')}">date</span></span>
-                </p>
-                <p class="small"><a th:href="@{/eoq}">See how much winter stock to buy →</a></p>
             </div>
             <div>
                 <p class="muted small">Cold days in past winters (October average in brackets)</p>
@@ -87,13 +75,6 @@
         <p class="small">
             <strong th:text="${selected.name}">Product</strong>
             <span class="badge" th:classappend="${selected.seasonal} ? 'info'" th:text="${selected.seasonal} ? 'Winter product' : 'Steady product'">type</span>
-        </p>
-        <p class="small muted">
-            <strong>Model:</strong> <span th:text="${data.model.method}">method</span>.
-            <span th:if="${data.model.eventFactor != 1.0}">Holiday/promotion weeks:
-                ×<span th:text="${#numbers.formatDecimal(data.model.eventFactor, 1, 2)}">1.00</span>.</span>
-            Average weekly error: ±<span th:text="${#numbers.formatDecimal(data.model.meanAbsoluteError, 1, 1)}">0</span> units
-            (standard deviation <span th:text="${#numbers.formatDecimal(data.model.errorStd, 1, 1)}">0</span>, used for the safety stock).
         </p>
 
         <div th:if="${!chart.empty}">
@@ -197,21 +178,6 @@
                 </table>
             </details>
         </div>
-    </section>
-
-    <section class="panel small">
-        <h2>How the forecast works</h2>
-        <ol>
-            <li><strong>Winter length (machine learning):</strong> for each past winter, count the cold days and note the average
-                October temperature. A straight line is fitted through those points (linear regression). This October's
-                temperature is put into the line to predict this winter. Once winter starts, the days already passed are counted.</li>
-            <li><strong>Winter products:</strong> a second regression learns <span class="formula">weekly sales = base + extra × cold days</span>
-                from the sales and temperature history.</li>
-            <li><strong>Steady products:</strong> average of the last 12 normal weeks (moving average).</li>
-            <li><strong>Holidays and promotions:</strong> the average uplift seen in past event weeks is applied to future event weeks.</li>
-        </ol>
-        <p>Both regressions are trained in Python with scikit-learn (<span class="formula">ml/model_worker.py</span>), which the
-            app starts in the background. If Python is not installed, the same formulas run in Java and give the same numbers.</p>
     </section>
 </main>
 </body>

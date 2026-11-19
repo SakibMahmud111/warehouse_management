@@ -1,7 +1,6 @@
 package com.waremanager.controller;
 
 import com.waremanager.service.PlanningService;
-import com.waremanager.service.PythonModelTrainer;
 import com.waremanager.service.RiskService;
 import com.waremanager.service.SettingsService;
 import org.springframework.stereotype.Controller;
@@ -19,14 +18,11 @@ public class RiskController {
     private final RiskService risks;
     private final SettingsService settings;
     private final PlanningService planning;
-    private final PythonModelTrainer models;
 
-    public RiskController(RiskService risks, SettingsService settings, PlanningService planning,
-                          PythonModelTrainer models) {
+    public RiskController(RiskService risks, SettingsService settings, PlanningService planning) {
         this.risks = risks;
         this.settings = settings;
         this.planning = planning;
-        this.models = models;
     }
 
     @GetMapping
@@ -34,8 +30,6 @@ public class RiskController {
         model.addAttribute("ranked", risks.ranked());
         model.addAttribute("alerts", risks.recentAlerts());
         model.addAttribute("settings", settings.get());
-        model.addAttribute("mlEngine", models.getStatus());
-        model.addAttribute("mlPython", models.isUsingPython());
         return "stockout-risk";
     }
 

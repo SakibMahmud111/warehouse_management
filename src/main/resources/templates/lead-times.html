@@ -9,17 +9,6 @@
         <form th:action="@{/lead-times/recalculate}" method="post"><button type="submit">Recalculate now</button></form>
     </div>
     <div th:replace="~{fragments :: messages}"></div>
-    <p class="small">Prediction model trained by:
-        <span class="badge" th:classappend="${mlPython} ? 'ok' : 'warn'" th:text="${mlEngine}">Python with scikit-learn</span></p>
-
-    <section class="panel small">
-        <p><span class="formula">prediction = 0.3 × newest lead time + 0.7 × previous prediction</span>
-            (each new delivery counts 30%, so a supplier that is getting slower is noticed quickly).</p>
-        <p class="muted">Lead time = days from ordering to receiving. With fewer than 3 recorded deliveries the product's manual value is used.
-            The prediction and its spread feed the <a th:href="@{/safety-stock}">safety stock</a>, the winter order-by date in the
-            <a th:href="@{/eoq}">winter stock plan</a>, and the <a th:href="@{/stockout-risk}">stockout risk</a>. Every receipt is compared with what was predicted
-            when the order was placed.</p>
-    </section>
 
     <div class="tablewrap">
         <table class="compact">

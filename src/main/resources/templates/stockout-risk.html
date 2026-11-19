@@ -9,18 +9,6 @@
         <form th:action="@{/stockout-risk/recalculate}" method="post"><button type="submit">Recalculate now</button></form>
     </div>
     <div th:replace="~{fragments :: messages}"></div>
-    <p class="small">Probability model calculated by:
-        <span class="badge" th:classappend="${mlPython} ? 'ok' : 'warn'" th:text="${mlEngine}">Python with scikit-learn</span></p>
-
-    <section class="panel small">
-        <p><span class="formula">chance of running out = 1 − Φ((on hand − expected demand) ÷ σ)</span>,
-            <span class="formula">σ = √(days × σd² + d² × σLT²)</span></p>
-        <p class="muted">"Days" = until the next open order arrives (expected arrival date), or one predicted lead time if nothing is on order.
-            Expected demand comes from the <a th:href="@{/forecast}">demand forecast</a>, σd from its error, σLT from the <a th:href="@{/lead-times}">lead-time prediction</a>.
-            Products at or above <strong th:text="${#numbers.formatDecimal(settings.stockoutAlertPercent, 1, 0)} + '%'">30%</strong>
-            (<a th:href="@{/settings}">change</a>) raise an alert linked to their <a th:href="@{/reorder-points}">reorder suggestion</a>.
-            The chance is calculated in Python with SciPy's normal distribution (<span class="formula">ml/model_worker.py</span>).</p>
-    </section>
 
     <div class="tablewrap">
         <table class="compact">

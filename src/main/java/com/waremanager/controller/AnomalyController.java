@@ -2,7 +2,6 @@ package com.waremanager.controller;
 
 import com.waremanager.service.AnomalyService;
 import com.waremanager.service.PlanningService;
-import com.waremanager.service.PythonModelTrainer;
 import com.waremanager.service.SettingsService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,22 +20,17 @@ public class AnomalyController {
     private final AnomalyService anomalies;
     private final SettingsService settings;
     private final PlanningService planning;
-    private final PythonModelTrainer models;
 
-    public AnomalyController(AnomalyService anomalies, SettingsService settings, PlanningService planning,
-                             PythonModelTrainer models) {
+    public AnomalyController(AnomalyService anomalies, SettingsService settings, PlanningService planning) {
         this.anomalies = anomalies;
         this.settings = settings;
         this.planning = planning;
-        this.models = models;
     }
 
     @GetMapping
     public String page(Model model) {
         model.addAttribute("alerts", anomalies.recentAnomalies());
         model.addAttribute("settings", settings.get());
-        model.addAttribute("mlEngine", models.getStatus());
-        model.addAttribute("mlPython", models.isUsingPython());
         return "anomalies";
     }
 

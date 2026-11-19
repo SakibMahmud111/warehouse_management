@@ -97,22 +97,18 @@ class PlanningFeatureTests {
         mvc.perform(get("/products/new")).andExpect(status().isOk()).andExpect(content().string(containsString("Add product")));
         mvc.perform(get("/products/" + bySku("WM-BLK-01").getId() + "/edit"))
            .andExpect(status().isOk()).andExpect(content().string(containsString("Edit product")));
-        mvc.perform(get("/forecast")).andExpect(status().isOk()).andExpect(content().string(containsString("outlook")))
-           .andExpect(content().string(containsString("Machine-learning models trained by")));
+        mvc.perform(get("/forecast")).andExpect(status().isOk()).andExpect(content().string(containsString("outlook")));
         mvc.perform(get("/safety-stock")).andExpect(status().isOk()).andExpect(content().string(containsString("Safety stock")));
         mvc.perform(get("/reorder-points")).andExpect(status().isOk()).andExpect(content().string(containsString("Reorder suggestions")));
         mvc.perform(get("/eoq")).andExpect(status().isOk()).andExpect(content().string(containsString("Economic Order Quantity")));
         mvc.perform(get("/settings")).andExpect(status().isOk()).andExpect(content().string(containsString("Planning settings")));
-        mvc.perform(get("/lead-times")).andExpect(status().isOk()).andExpect(content().string(containsString("Supplier lead times")))
-           .andExpect(content().string(containsString("Prediction model trained by")));
-        mvc.perform(get("/stockout-risk")).andExpect(status().isOk()).andExpect(content().string(containsString("Stockout alerts")))
-           .andExpect(content().string(containsString("Probability model calculated by")));
-        mvc.perform(get("/anomalies")).andExpect(status().isOk()).andExpect(content().string(containsString("Unusual sales weeks")))
-           .andExpect(content().string(containsString("Anomaly check calculated by")));
+        mvc.perform(get("/lead-times")).andExpect(status().isOk()).andExpect(content().string(containsString("Supplier lead times")));
+        mvc.perform(get("/stockout-risk")).andExpect(status().isOk()).andExpect(content().string(containsString("Stockout alerts")));
+        mvc.perform(get("/anomalies")).andExpect(status().isOk()).andExpect(content().string(containsString("Unusual sales weeks")));
     }
 
     @Test
-    void pagesShowFeatureNamesWithoutFeatureNumbers() throws Exception {
+    void pagesShowNoFeatureNumbersOrModelDetails() throws Exception {
         Pattern featureNumber = Pattern.compile("\\bF\\d{1,2}\\b");   // F1, F2, ... F20 must not appear on any page
         List<String> pages = new ArrayList<>(List.of("/dashboard", "/products", "/products/new", "/forecast", "/safety-stock",
                 "/reorder-points", "/eoq", "/lead-times", "/stockout-risk", "/anomalies", "/settings"));
@@ -126,6 +122,11 @@ class PlanningFeatureTests {
             Matcher found = featureNumber.matcher(html);
             if (found.find()) {
                 fail(page + " shows the feature number \"" + found.group() + "\"");
+            }
+            for (String removed : List.of("How the forecast works", "How the planning features work together",
+                    "trained by:", "calculated by:", "model_worker.py", "scikit-learn", "Model:", "class=\"formula\"",
+                    "is the safety stock in force", "Predicted cold days this winter", "See the safety stock this forecast needs", "See how much winter stock to buy")) {
+                assertFalse(html.contains(removed), page + " still shows \"" + removed + "\"");
             }
         }
     }

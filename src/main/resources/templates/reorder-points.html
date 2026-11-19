@@ -10,13 +10,6 @@
     </div>
     <div th:replace="~{fragments :: messages}"></div>
 
-    <section class="panel small">
-        <p><span class="formula">reorder point = lead-time demand + safety stock</span></p>
-        <p class="muted">When stock on hand + stock on order is at or below the reorder point, a reorder suggestion is created
-            with the <a th:href="@{/eoq}">recommended order quantity</a>. Winter products follow the winter stock plan instead, so leftover
-            winter stock is never reordered.</p>
-    </section>
-
     <div class="tablewrap">
         <table class="compact">
             <thead>
@@ -95,9 +88,6 @@
             </tbody>
         </table>
     </div>
-    <p class="muted small">"Mark ordered" adds the units to "On order" and records a purchase order with the predicted arrival date.
-        "Mark received" moves them into stock; the real days between the two dates teach the <a th:href="@{/lead-times}">lead-time prediction</a>
-        (the received date must be at least 1 day after the order date). Both recalculate all plans.</p>
 </main>
 </body>
 </html>

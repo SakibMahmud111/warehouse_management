@@ -9,18 +9,6 @@
         <form th:action="@{/anomalies/recalculate}" method="post"><button type="submit">Check again</button></form>
     </div>
     <div th:replace="~{fragments :: messages}"></div>
-    <p class="small">Anomaly check calculated by:
-        <span class="badge" th:classappend="${mlPython} ? 'ok' : 'warn'" th:text="${mlEngine}">Python with scikit-learn</span></p>
-
-    <section class="panel small">
-        <p>Each of the last 12 weeks is compared with what the <a th:href="@{/forecast}">forecast model</a> expected for that week. The model
-            already knows about cold days and holidays, so a blanket spike in a cold week is <em>not</em> unusual.</p>
-        <p class="muted">A week is flagged when it is at least
-            <strong th:text="${#numbers.formatDecimal(settings.anomalyThresholdPercent, 1, 0)} + '%'">50%</strong>
-            (<a th:href="@{/settings}">change</a>) above or below the forecast and at least 5 units away.
-            Mark each one as explained (with a note) or under investigation. If the sales are corrected, an open alert closes itself.
-            The comparison runs in Python with NumPy (<span class="formula">ml/model_worker.py</span>).</p>
-    </section>
 
     <div class="tablewrap">
         <table class="compact">
@@ -57,7 +45,6 @@
             </tbody>
         </table>
     </div>
-    <p class="muted small">To correct a wrong sales figure, record the week again on the <a th:href="@{/forecast}">Forecast page</a>.</p>
 </main>
 </body>
 </html>
