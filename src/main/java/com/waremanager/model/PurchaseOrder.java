@@ -43,6 +43,16 @@ public class PurchaseOrder {
     @Column(name = "received_date")
     private LocalDate receivedDate;
 
+    //f5 ->
+    /** Units actually received (empty = the full ordered quantity arrived). */
+    @Column(name = "received_quantity")
+    private Integer receivedQuantity;
+
+    /** Units found defective on receipt (empty = 0). */
+    @Column(name = "defective_quantity")
+    private Integer defectiveQuantity;
+    // <- f5
+
     /** The F3 suggestion this order came from, if any. */
     @OneToOne
     @JoinColumn(name = "suggestion_id", unique = true)
@@ -95,4 +105,11 @@ public class PurchaseOrder {
     public LocalDate getReceivedDate() { return receivedDate; }
     public void setReceivedDate(LocalDate receivedDate) { this.receivedDate = receivedDate; }
     public ReorderSuggestion getSuggestion() { return suggestion; }
+    
+    //f5 ->
+    public Integer getReceivedQuantity() { return receivedQuantity; }
+    public void setReceivedQuantity(Integer receivedQuantity) { this.receivedQuantity = receivedQuantity; }
+    public Integer getDefectiveQuantity() { return defectiveQuantity; }
+    public void setDefectiveQuantity(Integer defectiveQuantity) { this.defectiveQuantity = defectiveQuantity; }
+    // <- f5
 }

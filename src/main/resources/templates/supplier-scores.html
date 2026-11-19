@@ -1,0 +1,29 @@
+<!--F5-->
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('F5 Supplier scores')}"></head>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+<main class="container wide">
+    <div class="heading"><div><p class="eyebrow">PURCHASING</p><h1>F5 · Supplier reliability</h1></div></div>
+    <div th:replace="~{fragments :: messages}"></div>
+    <div class="tablewrap">
+        <table class="compact">
+            <thead><tr><th>#</th><th>Supplier</th><th>On-time</th><th>Fill rate</th><th>Defect rate</th><th>Score</th><th>Receipts</th></tr></thead>
+            <tbody>
+            <tr th:each="r, i : ${rows}">
+                <td th:text="${i.count}">1</td>
+                <td><a th:href="@{/supplier-scores/{id}(id=${r.supplier().id})}" th:text="${r.supplier().name}">Name</a></td>
+                <td th:text="${#numbers.formatDecimal(r.result().onTimeRate() * 100, 1, 1)} + '%'">0%</td>
+                <td th:text="${#numbers.formatDecimal(r.result().fillRate() * 100, 1, 1)} + '%'">0%</td>
+                <td th:text="${#numbers.formatDecimal(r.result().defectRate() * 100, 1, 1)} + '%'">0%</td>
+                <td><strong th:text="${r.result().score()}">0</strong></td>
+                <td th:text="${r.result().receipts()}">0</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="muted small">Score = 40% on-time + 40% fill rate + 20% (1 − defect rate). On-time = received on or before the expected date.</p>
+</main>
+</body>
+</html>

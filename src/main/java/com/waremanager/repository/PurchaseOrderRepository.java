@@ -21,4 +21,8 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Lo
     List<PurchaseOrder> findByReceivedDateIsNullOrderByOrderDateAscIdAsc();
 
     List<PurchaseOrder> findTop20ByReceivedDateIsNotNullOrderByReceivedDateDescIdDesc();
+
+    //f5 ->
+    List<PurchaseOrder> findByReceivedDateIsNotNull();
+    // <- f5
 }

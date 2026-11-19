@@ -1,0 +1,59 @@
+<!--F5-->
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('F5 · ' + ${supplier.name})}"></head>
+<body>
+<header th:replace="~{fragments :: topbar}"></header>
+<main class="container wide">
+    <div class="heading">
+        <div>
+            <p class="eyebrow">PURCHASING</p>
+            <h1 th:text="'F5 · ' + ${supplier.name}">Supplier</h1>
+        </div>
+        <a th:href="@{/supplier-scores}">← Back to supplier scores</a>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+    <div class="tablewrap">
+        <table class="compact">
+            <thead>
+            <tr>
+                <th>Product</th>
+                <th class="num">Ordered qty</th>
+                <th>Order date</th>
+                <th>Expected</th>
+                <th>Received date</th>
+                <th>On-time</th>
+                <th class="num">Received qty</th>
+                <th class="num">Defective</th>
+                <th>Record receipt quality</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="o : ${orders}">
+                <td th:text="${o.product.name}">Product</td>
+                <td class="num" th:text="${o.quantity}">0</td>
+                <td th:text="${o.orderDate}">2026-01-01</td>
+                <td th:text="${o.expectedDate}">2026-01-05</td>
+                <td th:text="${o.receivedDate}">2026-01-05</td>
+                <td>
+                    <span th:class="${!o.receivedDate.isAfter(o.expectedDate)} ? 'badge ok' : 'badge danger'"
+                          th:text="${!o.receivedDate.isAfter(o.expectedDate)} ? 'Yes' : 'Late'">Yes</span>
+                </td>
+                <td class="num" th:text="${o.receivedQuantity ?: o.quantity}">0</td>
+                <td class="num" th:text="${o.defectiveQuantity ?: 0}">0</td>
+                <td>
+                    <form class="inline-form"
+                          th:action="@{/supplier-scores/{id}/receipts/{oid}(id=${supplier.id}, oid=${o.id})}"
+                          method="post">
+                        <input type="number" name="receivedQuantity" min="0" th:max="${o.quantity}" th:value="${o.receivedQuantity ?: o.quantity}" required>
+                        <input type="number" name="defectiveQuantity" min="0" th:value="${o.defectiveQuantity ?: 0}" required>
+                        <button type="submit">Save</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

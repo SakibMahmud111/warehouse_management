@@ -37,6 +37,13 @@
             <span class="muted">more expected profit than stocking for the usual number of days
                 (orders now: ৳<span th:text="${#numbers.formatDecimal(summary.winterOrderCost, 1, 'COMMA', 0, 'POINT')}">0</span>)</span>
         </a>
+        
+        <a class="card" th:href="@{/supplier-scores}">
+            <span class="card-label">Supplier score</span>
+            <strong th:text="${#numbers.formatDecimal(supplierAvg, 1, 1)}">0</strong>
+            <span class="muted">average reliability across suppliers</span>
+        </a>
+
         <a class="card" th:href="@{/stockout-risk}">
             <span class="card-label">Stockout alerts</span>
             <strong th:class="${summary.stockoutAlerts > 0} ? 'bad'" th:text="${summary.stockoutAlerts}">0</strong>
